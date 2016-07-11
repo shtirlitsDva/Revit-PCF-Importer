@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Revit-PCF-Importer 2017")]
-[assembly: AssemblyDescription("Revit Add-In Description for Revit-PCF-Importer 2017")]
+[assembly: AssemblyTitle("Revit-PCF-Importer")]
+[assembly: AssemblyDescription("Import PCF files to Revit")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Autodesk Inc.")]
-[assembly: AssemblyProduct("Revit-PCF-Importer 2017 Revit C# .NET Add-In")]
-[assembly: AssemblyCopyright("Copyright 2016 (C) Jeremy Tammik, Autodesk Inc.")]
+[assembly: AssemblyCompany("MGTek /v Michail Golubjev")]
+[assembly: AssemblyProduct("Revit-PCF-Importer Revit C# .NET Add-In")]
+[assembly: AssemblyCopyright("Copyright 2016 (C) Michail Golubjev")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("321044f7-b0b2-4b1c-af18-e71a19252be0")]
+[assembly: Guid("321044f7-b0b2-4b1c-af18-e71a19252be1")]
 
 // Version information for an assembly consists of the following four values:
 //

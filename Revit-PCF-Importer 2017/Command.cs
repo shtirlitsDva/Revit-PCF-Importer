@@ -9,15 +9,12 @@ using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 #endregion
 
-namespace Revit_PCF_Importer_2017
+namespace Revit_PCF_Importer
 {
     [Transaction(TransactionMode.Manual)]
     public class Command : IExternalCommand
     {
-        public Result Execute(
-          ExternalCommandData commandData,
-          ref string message,
-          ElementSet elements)
+        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
@@ -30,8 +27,7 @@ namespace Revit_PCF_Importer_2017
 
             // Retrieve elements from database
 
-            FilteredElementCollector col
-              = new FilteredElementCollector(doc)
+            FilteredElementCollector col = new FilteredElementCollector(doc)
                 .WhereElementIsNotElementType()
                 .OfCategory(BuiltInCategory.INVALID)
                 .OfClass(typeof(Wall));

@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Command">
+    <Text>Command Revit-PCF-Importer</Text>
+    <Description>Imports PCF data into Revit</Description>
+    <Assembly>Revit-PCF-Importer.dll</Assembly>
+    <FullClassName>Revit_PCF_Importer.Command</FullClassName>
+    <ClientId>edd2eb79-f4bd-4a68-a214-a422f22e56a9</ClientId>
+    <VendorId>dk.mgtek</VendorId>
+    <VendorDescription>MGTek</VendorDescription>
+  </AddIn>
+  <AddIn Type="Application">
+    <Name>Application Revit-PCF-Importer</Name>
+    <Assembly>Revit-PCF-Importer.dll</Assembly>
+    <FullClassName>Revit_PCF_Importer.App</FullClassName>
+    <ClientId>881186cc-5e86-4235-82df-331c06564919</ClientId>
+    <VendorId>dk.mgtek</VendorId>
+    <VendorDescription>www.mgtek.dk</VendorDescription>
+  </AddIn>
+</RevitAddIns>

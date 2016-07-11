@@ -7,7 +7,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 #endregion
 
-namespace Revit_PCF_Importer_2017
+namespace Revit_PCF_Importer
 {
     class App : IExternalApplication
     {
