@@ -49,10 +49,18 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ParameterData.cs" />
+    <Compile Include="RadioBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Utils.cs" />
     <None Include="App.cs" />
     <Compile Include="PCF_FileReader.cs" />
+    <Compile Include="PCF_Functions.cs" />
     <Compile Include="PCF_Main.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
