@@ -10,7 +10,7 @@ namespace Revit_PCF_Importer
     public class PCF_Dictionary : IParseKeywords
     {
         private readonly IKeywordProcessor _keywordProcessor;
-        private Dictionary<string, Func<string, StringCollection>> _dictionary;
+        private Dictionary<string, Func<StringCollection, string>> _dictionary;
 
         public PCF_Dictionary(IKeywordProcessor keywordProcessor)
         {
@@ -18,13 +18,13 @@ namespace Revit_PCF_Importer
             _dictionary = CreateDictionary();
         }
 
-        public Dictionary<string, Func<string, StringCollection>> CreateDictionary()
+        public Dictionary<string, Func<StringCollection, string>> CreateDictionary()
         {
-            var dictionary = new Dictionary<string, Func<string, StringCollection>>
+            var dictionary = new Dictionary<string, Func<StringCollection, string>>
             {
-                {"ISOGEN-FILES", _keywordProcessor.ISOGEN_FILES(string keyword, StringCollection)},
-                {"UNITS-BORE", _keywordProcessor.UNITS_BORE()},
-                {"UNITS-CO-ORDS", _keywordProcessor.UNITS_CO_ORDS()}
+                {"ISOGEN-FILES", _keywordProcessor.ISOGEN_FILES}
+                //{"UNITS-BORE", _keywordProcessor.UNITS_BORE},
+                //{"UNITS-CO-ORDS", _keywordProcessor.UNITS_CO_ORDS}
             };
             return dictionary;
         }
@@ -33,7 +33,7 @@ namespace Revit_PCF_Importer
         {
             if (_dictionary.ContainsKey(keyword))
             {
-                return _dictionary[keyword].Invoke(_keywordProcessor.ISOGEN_FILES(results));
+                return _dictionary[keyword].Invoke(results);
             }
             throw new Exception("Keyword not implemented!");
         }

@@ -31,14 +31,15 @@ namespace Revit_PCF_Importer
             //Read the input file
             FileReader fileReader = new FileReader();
             string[] readFile = fileReader.ReadFile();
-
+            //Instantiate the PCF_Dictionary mega complex refactoring switch solution which doesn't really work
+            PCF_Dictionary dictionary = new PCF_Dictionary(new KeywordProcessor());
             foreach (string line in readFile)
             {
                 //Execute keyword handling
                 //Declare a StringCollection to hold the matches
                 StringCollection resultList = new StringCollection();
                 //Define a Regex to parse the input
-                Regex parseWords = new Regex(@"(\w+|[-]|[.])*");
+                Regex parseWords = new Regex(@"(\S+)");
                 //Define a Match to handle the results from Regex
                 Match match = parseWords.Match(line);
                 //Add every match from Regex to the StringCollection
@@ -52,9 +53,8 @@ namespace Revit_PCF_Importer
                 string keyword = resultList[0];
                 //Remove the keyword from the results
                 resultList.RemoveAt(0);
-                //Instantiate the PCF_Dictionary mega complex refactoring switch solution which doesn't really work
-                PCF_Dictionary dictionary = new PCF_Dictionary(new KeywordProcessor());
-                dictionary.ParseKeywords(keyword, resultList);
+                //Parse keywords
+                var returns = dictionary.ParseKeywords(keyword, resultList);
             }
             
             //using (Transaction tx = new Transaction(doc))
