@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="ParameterData.cs" />
     <Compile Include="PCF_Dictionary.cs" />
+    <Compile Include="PCF_ElementSymbol.cs" />
     <Compile Include="PCF_Parser.cs" />
     <Compile Include="RadioBox.cs">
       <SubType>Component</SubType>
