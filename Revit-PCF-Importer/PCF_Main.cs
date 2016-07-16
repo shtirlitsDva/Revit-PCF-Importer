@@ -34,77 +34,29 @@ namespace Revit_PCF_Importer
 
             foreach (string line in readFile)
             {
-                if (!line.StartsWith("    "))
+                //Execute keyword handling
+                //Declare a StringCollection to hold the matches
+                StringCollection resultList = new StringCollection();
+                //Define a Regex to parse the input
+                Regex parseWords = new Regex(@"(\w+|[-]|[.])*");
+                //Define a Match to handle the results from Regex
+                Match match = parseWords.Match(line);
+                //Add every match from Regex to the StringCollection
+                while (match.Success)
                 {
-                    //Execute type handling
-                    //Declare a StringCollection to hold the matches
-                    StringCollection resultList = new StringCollection();
-                    //Define a Regex to parse the input
-                    Regex parseWords = new Regex(@"(\w+|[-]|[.])*");
-                    //Define a Match to handle the results from Regex
-                    Match match = parseWords.Match(line);
-                    //Add every match from Regex to the StringCollection
-                    while (match.Success)
-                    {
-                        //Only add the result if it is not a white space or null
-                        if (!string.IsNullOrEmpty(match.Value)) resultList.Add(match.Value);
-                        match = match.NextMatch();
-                    }
-
-                    //Declare helper variables
-                    string value;
-
-                    switch (resultList[0])
-                    {
-                        case "ISOGEN-FILES":
-                            break;
-
-                        case "UNITS-BORE":
-                            #region UNITS-BORE
-                            value = resultList[1];
-                            iv.UNITS_BORE = value;
-                            if (string.Equals(value, "MM"))
-                            {
-                                iv.UNITS_BORE_MM = true;
-                                iv.UNITS_BORE_INCH = false;
-                            }
-                            if (string.Equals(value, "INCH"))
-                            {
-                                iv.UNITS_BORE_MM = false;
-                                iv.UNITS_BORE_INCH = true;
-                            }
-                            if (string.Equals(value,"INCH-SIXTEENTH"))
-                            {
-                                Util.ErrorMsg("Value INCH-SIXTEENTH for UNITS-BORE not implemented!\n" +
-                                              "Please specify either MM or INCH.");
-                            }
-                            #endregion
-                            break;
-                        case "UNITS-CO-ORDS":
-                            #region UNITS-CO-ORDS
-                            value = resultList[1];
-                            iv.UNITS_CO_ORDS = value;
-                            if (string.Equals(value, "MM"))
-                            {
-                                iv.UNITS_CO_ORDS_MM = true;
-                                iv.UNITS_CO_ORDS_INCH = false;
-                            }
-                            if (string.Equals(value, "INCH"))
-                            {
-                                iv.UNITS_CO_ORDS_MM = false;
-                                iv.UNITS_CO_ORDS_INCH = true;
-                            }
-                            #endregion
-                            break;
-                    }
-
+                    //Only add the result if it is not a white space or null
+                    if (!string.IsNullOrEmpty(match.Value)) resultList.Add(match.Value);
+                    match = match.NextMatch();
                 }
-                if (line.StartsWith("    "))
-                {
-                    //Execute attribute handling
-                }
+                //Separate the keyword and the rest of words from the results
+                string keyword = resultList[0];
+                //Remove the keyword from the results
+                resultList.RemoveAt(0);
+                //Instantiate the PCF_Dictionary mega complex refactoring switch solution which doesn't really work
+                PCF_Dictionary dictionary = new PCF_Dictionary(new KeywordProcessor());
+                dictionary.ParseKeywords(keyword, resultList);
             }
-
+            
             //using (Transaction tx = new Transaction(doc))
             //{
             //    tx.Start("Transaction Name");
