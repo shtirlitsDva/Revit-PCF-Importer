@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Globalization;
-
+using System.Text.RegularExpressions;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.UI;
@@ -581,9 +582,65 @@ namespace PCF_Functions
                 Util.InfoMsg(e.Message);
                 return Result.Failed;
             }
+        }
+    }
 
+    public class Parser
+    {
+        public string GetElementKeyword(string line)
+        {
+            //Execute keyword handling
+            //Define a Regex to parse the input
+            Regex parseWords = new Regex(@"(\S+)");
 
+            //Define a Match to handle the results from Regex
+            Match match = parseWords.Match(line);
 
+            //Separate the keyword and the rest of words from the results
+            string keyword = match.Value;
+
+            return keyword;
+        }
+
+        public string GetRestOfTheLine(string line)
+        {
+            //Execute keyword handling
+            //Declare a StringCollection to hold the matches
+            StringCollection resultList = new StringCollection();
+
+            //Define a Regex to parse the input
+            Regex parseWords = new Regex(@"(\S+)");
+
+            //Define a Match to handle the results from Regex
+            Match match = parseWords.Match(line);
+
+            //Add every match from Regex to the StringCollection
+            while (match.Success)
+            {
+                //Only add the result if it is not a white space or null
+                if (!string.IsNullOrEmpty(match.Value)) resultList.Add(match.Value);
+                match = match.NextMatch();
+            }
+            //Remove the keyword from the results
+            resultList.RemoveAt(0);
+
+            //string[] strArray = new string[resultList];
+            string restOfTheLine = string.Empty;
+
+            //Concat the StringCollection to a string
+            if (resultList.Count == 1)
+            {
+                restOfTheLine = resultList[0];
+            }
+
+            if (resultList.Count > 1)
+            {
+                string[] strArray = new string[resultList.Count];
+                FIX THIS resultList.CopyTo(resultList);
+                restOfTheLine = string.Join(" ", resultList);
+            }
+
+            return restOfTheLine;
         }
     }
 }

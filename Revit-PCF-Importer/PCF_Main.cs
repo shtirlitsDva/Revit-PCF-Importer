@@ -16,6 +16,8 @@ using Autodesk.Revit.UI.Selection;
 
 using iv = PCF_Functions.InputVars;
 using BuildingCoder;
+using PCF_Functions;
+
 #endregion
 
 namespace Revit_PCF_Importer
@@ -25,9 +27,7 @@ namespace Revit_PCF_Importer
     public class PCFImport : IExternalCommand
     {
         //Declare the element collector
-        public ElementSymbol[] ElementCollector;
-        public ElementSymbol CurElementSymbol;
-        public StringCollection[] SourceData;
+        public ElementCollection ExtractedElementCollection;
 
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
@@ -36,16 +36,20 @@ namespace Revit_PCF_Importer
             Application app = uiapp.Application;
             Document doc = uidoc.Document;
 
+            ExtractedElementCollection = new ElementCollection();
+            ExtractedElementCollection.Elements = new ArrayList();
+            ExtractedElementCollection.Position = new ArrayList();
+
             //Read the input file
             FileReader fileReader = new FileReader();
             string[] readFile = fileReader.ReadFile();
 
-            StringCollection resultList;
-
             //Iteration counter
             int iterationCounter = -1;
-            //Element index
-            int curElementIndex = 0;
+            //Parser
+            Parser parser = new Parser();
+            //Holds current pipeline reference
+            string curPipelineReference = "PRE-PIPELINE";
             
             foreach (string line in readFile)
             {
@@ -55,35 +59,29 @@ namespace Revit_PCF_Importer
                 //Logic test for Type or Property
                 if (!line.StartsWith("    "))
                 {
-                    curElementIndex = iterationCounter;
-                    CurElementSymbol = new ElementSymbol();
+                    //Make a new Element
+                    ElementSymbol CurElementSymbol = new ElementSymbol();
+                    //Get the keyword from the parsed line
+                    CurElementSymbol.ElementType = parser.GetElementKeyword(line);
+                    //Get the element position in the file
+                    CurElementSymbol.Position = iterationCounter;
+                    switch (CurElementSymbol.ElementType)
+                    {
+                        case "PIPELINE-REFERENCE":
+                        case "MATERIALS":
+                            curPipelineReference = parser.GetRestOfTheLine(line);
+                            break;
+                    }
+                    CurElementSymbol.PipelineReference = curPipelineReference;
+
+                    //Add the extracted element to the collection
+                    ExtractedElementCollection.Elements.Add(CurElementSymbol);
+                    ExtractedElementCollection.Position.Add(iterationCounter);
                 }
 
-                Idea: Parse the whole file and mark the position of pipeline references.
+                //Idea: Parse the whole file and mark the position of pipeline references.
 
-                ////Execute keyword handling
-                ////Declare a StringCollection to hold the matches
-                //StringCollection resultList = new StringCollection();
-
-                ////Define a Regex to parse the input
-                //Regex parseWords = new Regex(@"(\S+)");
-
-                ////Define a Match to handle the results from Regex
-                //Match match = parseWords.Match(line);
-
-                ////Add every match from Regex to the StringCollection
-                //while (match.Success)
-                //{
-                //    //Only add the result if it is not a white space or null
-                //    if (!string.IsNullOrEmpty(match.Value)) resultList.Add(match.Value);
-                //    match = match.NextMatch();
-                //}
-                ////Separate the keyword and the rest of words from the results
-                //string keyword = resultList[0];
-                ////Remove the keyword from the results
-                //resultList.RemoveAt(0);
-                //////Parse keywords
-                ////var returns = dictionary.ParseKeywords(keyword, resultList);
+                
             }
 
             //using (Transaction tx = new Transaction(doc))
