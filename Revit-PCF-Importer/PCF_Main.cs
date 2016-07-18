@@ -37,8 +37,6 @@ namespace Revit_PCF_Importer
             Document doc = uidoc.Document;
 
             ExtractedElementCollection = new ElementCollection();
-            ExtractedElementCollection.Elements = new ArrayList();
-            ExtractedElementCollection.Position = new ArrayList();
 
             //Read the input file
             FileReader fileReader = new FileReader();
@@ -51,6 +49,7 @@ namespace Revit_PCF_Importer
             //Holds current pipeline reference
             string curPipelineReference = "PRE-PIPELINE";
             
+            //This loop collects all top-level element strings and creates ElementSymbols with data
             foreach (string line in readFile)
             {
                 //Count iterations
@@ -78,11 +77,28 @@ namespace Revit_PCF_Importer
                     ExtractedElementCollection.Elements.Add(CurElementSymbol);
                     ExtractedElementCollection.Position.Add(iterationCounter);
                 }
-
-                //Idea: Parse the whole file and mark the position of pipeline references.
-
-                
             }
+
+            //This loop compares all element symbols and gets the amount of line for their definition
+            //Then it extracts the lines to a property --- NEEDS TO BE IMPLEMENTED!
+            for (int idx = 0; idx < ExtractedElementCollection.Elements.Count; idx++)
+            {
+                //Handle last element
+                if (ExtractedElementCollection.Elements.Count == idx + 1)
+                {
+                    int lastIndex = readFile.Length - 1;
+                    ExtractedElementCollection.Elements[idx].DefinitionLengthInLines = ExtractedElementCollection.Elements[idx].Position - lastIndex;
+                    continue;
+                }
+                
+                int differenceInPosition = ExtractedElementCollection.Elements[idx + 1].Position - ExtractedElementCollection.Elements[idx].Position - 1;
+                ExtractedElementCollection.Elements[idx].DefinitionLengthInLines = differenceInPosition;
+
+                //Implement extraction of lines
+            }
+
+            //!!!Handle the last element in the listarray
+
 
             //using (Transaction tx = new Transaction(doc))
             //{

@@ -636,8 +636,8 @@ namespace PCF_Functions
             if (resultList.Count > 1)
             {
                 string[] strArray = new string[resultList.Count];
-                FIX THIS resultList.CopyTo(resultList);
-                restOfTheLine = string.Join(" ", resultList);
+                resultList.CopyTo(strArray,0);
+                restOfTheLine = string.Join(" ", strArray);
             }
 
             return restOfTheLine;
