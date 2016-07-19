@@ -713,11 +713,11 @@ namespace PCF_Functions
             {
                 //Handle all elements
                 int curPosition = e.Position;
-                int defLength = e.DefinitionLengthInLines+1;
+                int defLength = e.DefinitionLengthInLines;
                 StringCollection collectedLines = new StringCollection();
                 
                 //Iterate over the lines, very important to make sure that the defLength is defined correctly
-                for (int i = 0; i < defLength; i++)
+                for (int i = 0; i <= defLength; i++)
                 {
                     collectedLines.Add(source[curPosition]);
                     curPosition++;
