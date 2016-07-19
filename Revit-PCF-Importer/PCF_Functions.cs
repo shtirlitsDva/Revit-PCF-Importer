@@ -10,6 +10,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.UI;
 using BuildingCoder;
+using Revit_PCF_Importer;
 using iv = PCF_Functions.InputVars;
 using pdef = PCF_Functions.ParameterDefinition;
 using plst = PCF_Functions.ParameterList;
@@ -641,6 +642,23 @@ namespace PCF_Functions
             }
 
             return restOfTheLine;
+        }
+
+        public static void IndexElementDefinitions(ElementCollection collection, string[] source)
+        {
+            for (int idx = 0; idx < collection.Elements.Count; idx++)
+            {
+                //Handle last element
+                if (collection.Elements.Count == idx + 1)
+                {
+                    int lastIndex = source.Length - 1;
+                    collection.Elements[idx].DefinitionLengthInLines = collection.Elements[idx].Position - lastIndex;
+                    continue;
+                }
+
+                int differenceInPosition = collection.Elements[idx + 1].Position - collection.Elements[idx].Position - 1;
+                collection.Elements[idx].DefinitionLengthInLines = differenceInPosition;
+            }
         }
     }
 }

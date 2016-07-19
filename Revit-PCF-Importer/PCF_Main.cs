@@ -80,25 +80,13 @@ namespace Revit_PCF_Importer
             }
 
             //This loop compares all element symbols and gets the amount of line for their definition
-            //Then it extracts the lines to a property --- NEEDS TO BE IMPLEMENTED!
-            for (int idx = 0; idx < ExtractedElementCollection.Elements.Count; idx++)
-            {
-                //Handle last element
-                if (ExtractedElementCollection.Elements.Count == idx + 1)
-                {
-                    int lastIndex = readFile.Length - 1;
-                    ExtractedElementCollection.Elements[idx].DefinitionLengthInLines = ExtractedElementCollection.Elements[idx].Position - lastIndex;
-                    continue;
-                }
-                
-                int differenceInPosition = ExtractedElementCollection.Elements[idx + 1].Position - ExtractedElementCollection.Elements[idx].Position - 1;
-                ExtractedElementCollection.Elements[idx].DefinitionLengthInLines = differenceInPosition;
-
-                //Implement extraction of lines
-            }
+            Parser.IndexElementDefinitions(ExtractedElementCollection, readFile);
 
             //!!!Handle the last element in the listarray
+            //Implement extraction of lines
 
+            //Test
+            int test = ExtractedElementCollection.Elements.Count;
 
             //using (Transaction tx = new Transaction(doc))
             //{
