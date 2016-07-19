@@ -588,7 +588,48 @@ namespace PCF_Functions
 
     public class Parser
     {
-        public string GetElementKeyword(string line)
+        public static void CreateInitialElementList(ElementCollection collection, string[] source)
+        {
+            int iterationCounter = -1;
+
+            //Holds current pipeline reference
+            string curPipelineReference = "PRE-PIPELINE";
+
+            foreach (string line in source)
+            {
+                //Count iterations
+                iterationCounter++;
+
+                //Logic test for Type or Property
+                if (!line.StartsWith("    "))
+                {
+                    //Make a new Element
+                    ElementSymbol CurElementSymbol = new ElementSymbol();
+                    //Get the keyword from the parsed line
+                    CurElementSymbol.ElementType = GetElementKeyword(line);
+                    //Get the element position in the file
+                    CurElementSymbol.Position = iterationCounter;
+                    //Set the correct pipeline reference
+                    //Add here if other top levet types needed that is on the same level as PIPELINE-REFERENCE
+                    switch (CurElementSymbol.ElementType)
+                    {
+                        case "PIPELINE-REFERENCE":
+                            curPipelineReference = GetRestOfTheLine(line);
+                            break;
+                        case "MATERIALS":
+                            curPipelineReference = "MATERIALS";
+                            break;
+                    }
+                    CurElementSymbol.PipelineReference = curPipelineReference;
+
+                    //Add the extracted element to the collection
+                    collection.Elements.Add(CurElementSymbol);
+                    collection.Position.Add(iterationCounter);
+                }
+            }
+        }
+
+        public static string GetElementKeyword(string line)
         {
             //Execute keyword handling
             //Define a Regex to parse the input
@@ -603,7 +644,7 @@ namespace PCF_Functions
             return keyword;
         }
 
-        public string GetRestOfTheLine(string line)
+        public static string GetRestOfTheLine(string line)
         {
             //Execute keyword handling
             //Declare a StringCollection to hold the matches
@@ -644,6 +685,11 @@ namespace PCF_Functions
             return restOfTheLine;
         }
 
+        /// <summary>
+        /// Compares the position value of elements in list and calculates number of lines in the element definition.
+        /// </summary>
+        /// <param name="collection"></param>
+        /// <param name="source"></param>
         public static void IndexElementDefinitions(ElementCollection collection, string[] source)
         {
             for (int idx = 0; idx < collection.Elements.Count; idx++)
@@ -652,12 +698,32 @@ namespace PCF_Functions
                 if (collection.Elements.Count == idx + 1)
                 {
                     int lastIndex = source.Length - 1;
-                    collection.Elements[idx].DefinitionLengthInLines = collection.Elements[idx].Position - lastIndex;
+                    collection.Elements[idx].DefinitionLengthInLines = lastIndex - collection.Elements[idx].Position;
                     continue;
                 }
-
+                //Handle all other elements
                 int differenceInPosition = collection.Elements[idx + 1].Position - collection.Elements[idx].Position - 1;
                 collection.Elements[idx].DefinitionLengthInLines = differenceInPosition;
+            }
+        }
+
+        public static void ExtractElementDefinition(ElementCollection collection, string[] source)
+        {
+            foreach (ElementSymbol e in collection.Elements)
+            {
+                //Handle all elements
+                int curPosition = e.Position;
+                int defLength = e.DefinitionLengthInLines+1;
+                StringCollection collectedLines = new StringCollection();
+                
+                //Iterate over the lines, very important to make sure that the defLength is defined correctly
+                for (int i = 0; i < defLength; i++)
+                {
+                    collectedLines.Add(source[curPosition]);
+                    curPosition++;
+                }
+                //Push the extracted lines to the element
+                e.SourceData = collectedLines;
             }
         }
     }

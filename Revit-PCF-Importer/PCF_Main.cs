@@ -42,51 +42,17 @@ namespace Revit_PCF_Importer
             FileReader fileReader = new FileReader();
             string[] readFile = fileReader.ReadFile();
 
-            //Iteration counter
-            int iterationCounter = -1;
-            //Parser
-            Parser parser = new Parser();
-            //Holds current pipeline reference
-            string curPipelineReference = "PRE-PIPELINE";
-            
-            //This loop collects all top-level element strings and creates ElementSymbols with data
-            foreach (string line in readFile)
-            {
-                //Count iterations
-                iterationCounter++;
+            //This method collects all top-level element strings and creates ElementSymbols with data
+            Parser.CreateInitialElementList(ExtractedElementCollection, readFile);
 
-                //Logic test for Type or Property
-                if (!line.StartsWith("    "))
-                {
-                    //Make a new Element
-                    ElementSymbol CurElementSymbol = new ElementSymbol();
-                    //Get the keyword from the parsed line
-                    CurElementSymbol.ElementType = parser.GetElementKeyword(line);
-                    //Get the element position in the file
-                    CurElementSymbol.Position = iterationCounter;
-                    switch (CurElementSymbol.ElementType)
-                    {
-                        case "PIPELINE-REFERENCE":
-                        case "MATERIALS":
-                            curPipelineReference = parser.GetRestOfTheLine(line);
-                            break;
-                    }
-                    CurElementSymbol.PipelineReference = curPipelineReference;
-
-                    //Add the extracted element to the collection
-                    ExtractedElementCollection.Elements.Add(CurElementSymbol);
-                    ExtractedElementCollection.Position.Add(iterationCounter);
-                }
-            }
-
-            //This loop compares all element symbols and gets the amount of line for their definition
+            //This method compares all element symbols and gets the amount of line for their definition
             Parser.IndexElementDefinitions(ExtractedElementCollection, readFile);
-
-            //!!!Handle the last element in the listarray
-            //Implement extraction of lines
+            
+            //This method extracts element data from the file
+            Parser.ExtractElementDefinition(ExtractedElementCollection, readFile);
 
             //Test
-            int test = ExtractedElementCollection.Elements.Count;
+            //int test = ExtractedElementCollection.Elements.Count;
 
             //using (Transaction tx = new Transaction(doc))
             //{

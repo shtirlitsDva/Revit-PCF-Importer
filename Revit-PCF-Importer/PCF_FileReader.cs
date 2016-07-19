@@ -11,7 +11,7 @@ namespace Revit_PCF_Importer
 
         public string[] ReadFile()
         {
-            readLines = System.IO.File.ReadAllLines(@"E:\CII\12\Ejby Vekslercentral_18-07-2016_22-59-32.pcf");
+            readLines = System.IO.File.ReadAllLines(@"G:\CII\12\Ejby Vekslercentral_18-07-2016_22-59-32.pcf");
             return readLines;
         }
     }
