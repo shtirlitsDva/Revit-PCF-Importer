@@ -51,6 +51,8 @@ namespace Revit_PCF_Importer
             //This method extracts element data from the file
             Parser.ExtractElementDefinition(ExtractedElementCollection, readFile);
 
+
+
             //Test
             //int test = ExtractedElementCollection.Elements.Count;
 
