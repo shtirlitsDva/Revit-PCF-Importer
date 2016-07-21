@@ -26,7 +26,11 @@ namespace Revit_PCF_Importer
                 {"ISOGEN-FILES", _keywordProcessor.ISOGEN_FILES},
                 {"UNITS-BORE", _keywordProcessor.UNITS_BORE},
                 {"UNITS-CO-ORDS", _keywordProcessor.UNITS_CO_ORDS},
-                {"UNITS-WEIGHT", _keywordProcessor.UNITS_WEIGHT}
+                {"UNITS-WEIGHT", _keywordProcessor.UNITS_WEIGHT},
+                {"UNITS-BOLT-DIA", _keywordProcessor.ELEMENT_TYPE_NOT_IMPLEMENTED},
+                {"UNITS-BOLT-LENGTH", _keywordProcessor.ELEMENT_TYPE_NOT_IMPLEMENTED},
+                {"UNITS-WEIGHT-LENGTH", _keywordProcessor.ELEMENT_TYPE_NOT_IMPLEMENTED},
+                {"PIPELINE-REFERENCE", _keywordProcessor.PIPELINE_REFERENCE},
             };
             return dictionary;
         }
@@ -38,7 +42,11 @@ namespace Revit_PCF_Importer
                 Result result = _dictionary[elementSymbol.ElementType].Invoke(elementSymbol);
                 return result;
             }
-            else throw new Exception("Keyword not implemented!");
+            else
+            {
+                _keywordProcessor.ELEMENT_TYPE_NOT_IMPLEMENTED(elementSymbol);
+                return Result.Failed;
+            }
         }
     }
 }

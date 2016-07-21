@@ -28,13 +28,15 @@ namespace Revit_PCF_Importer
     {
         //Declare the element collector
         public ElementCollection ExtractedElementCollection;
+        public static Autodesk.Revit.DB.Document doc; //This code to expose doc to class, because I don't want to pass it to each method in the chain
+        //See http://forums.autodesk.com/t5/revit-api/accessing-the-document-from-c-form-externalcommanddata-issue/td-p/4773407
 
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             UIApplication uiapp = commandData.Application;
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Application app = uiapp.Application;
-            Document doc = uidoc.Document;
+            doc = uidoc.Document;
 
             ExtractedElementCollection = new ElementCollection();
 

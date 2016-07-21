@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Plumbing;
 
 namespace Revit_PCF_Importer
 {
@@ -14,6 +15,7 @@ namespace Revit_PCF_Importer
         public string ElementType { get; set; } //The element type.
         public StringCollection SourceData { get; set; } = new StringCollection();//This contains the raw data read from file
         public string PipelineReference { get; set; } = "PRE-PIPELINE"; //This contains the pipeline reference that was read
+        public PipingSystemType PipingSystemType { get; set; } //Holds the PipeLineType for the element
         public int Position { get; set; } //Contains the position of the element in file
         public int DefinitionLengthInLines { get; set; } //Contains the number of lines that hold the element data in PCF file
         public PointInSpace EndPoint1 = new PointInSpace("END-POINT");
@@ -31,7 +33,7 @@ namespace Revit_PCF_Importer
     public class PointInSpace
     {
         public string Keyword { get; set; } //Contains the keyword for the pointInSpace
-        public XYZ Xyz { get; set; } = new XYZ();
+        public XYZ Xyz { get; set; } = null;
         public double Diameter { get; set; } = new double();
         public string RestOfTheLine { get; set; } = string.Empty;
         public bool Initialized { get; set; } = false;

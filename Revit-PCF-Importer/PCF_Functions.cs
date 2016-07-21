@@ -684,6 +684,31 @@ namespace PCF_Functions
             return restOfTheLine;
         }
 
+        public static StringCollection GetRestOfTheLineInStringCollection(string line)
+        {
+            //Execute keyword handling
+            //Declare a StringCollection to hold the matches
+            StringCollection resultList = new StringCollection();
+
+            //Define a Regex to parse the input
+            Regex parseWords = new Regex(@"(\S+)");
+
+            //Define a Match to handle the results from Regex
+            Match match = parseWords.Match(line);
+
+            //Add every match from Regex to the StringCollection
+            while (match.Success)
+            {
+                //Only add the result if it is not a white space or null
+                if (!string.IsNullOrEmpty(match.Value)) resultList.Add(match.Value);
+                match = match.NextMatch();
+            }
+            //Remove the keyword from the results
+            resultList.RemoveAt(0);
+
+            return resultList;
+        }
+
         /// <summary>
         /// Compares the position value of elements in list and calculates number of lines in the element definition.
         /// </summary>
