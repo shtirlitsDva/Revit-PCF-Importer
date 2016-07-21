@@ -666,7 +666,6 @@ namespace PCF_Functions
             //Remove the keyword from the results
             resultList.RemoveAt(0);
 
-            //string[] strArray = new string[resultList];
             string restOfTheLine = string.Empty;
 
             //Concat the StringCollection to a string
@@ -726,5 +725,13 @@ namespace PCF_Functions
                 e.SourceData = collectedLines;
             }
         }
+
+        //public static void ProcessLevel1Keywords(ElementCollection collection)
+        //{
+        //    foreach (ElementSymbol es in collection.Elements)
+        //    {
+                
+        //    }
+        //}
     }
 }

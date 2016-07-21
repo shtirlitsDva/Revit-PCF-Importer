@@ -51,6 +51,12 @@ namespace Revit_PCF_Importer
             //This method extracts element data from the file
             Parser.ExtractElementDefinition(ExtractedElementCollection, readFile);
 
+            PCF_Dictionary pcfDict = new PCF_Dictionary(new KeywordProcessor());
+            //This method processes elements
+            foreach (ElementSymbol elementSymbol in ExtractedElementCollection.Elements)
+            {
+                pcfDict.ProcessLevel1Keywords(elementSymbol);
+            }
 
 
             //Test
