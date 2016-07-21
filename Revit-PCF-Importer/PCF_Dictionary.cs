@@ -25,7 +25,8 @@ namespace Revit_PCF_Importer
             {
                 {"ISOGEN-FILES", _keywordProcessor.ISOGEN_FILES},
                 {"UNITS-BORE", _keywordProcessor.UNITS_BORE},
-                {"UNITS-CO-ORDS", _keywordProcessor.UNITS_CO_ORDS}
+                {"UNITS-CO-ORDS", _keywordProcessor.UNITS_CO_ORDS},
+                {"UNITS-WEIGHT", _keywordProcessor.UNITS_WEIGHT}
             };
             return dictionary;
         }
