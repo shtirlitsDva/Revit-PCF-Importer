@@ -622,6 +622,21 @@ namespace PCF_Functions
                     }
                     CurElementSymbol.PipelineReference = curPipelineReference;
 
+                    //Get the PipingSystemType based on the reference
+                    //Instantiate collector
+                    FilteredElementCollector collector = new FilteredElementCollector(PCFImport.doc);
+
+                    Filter filter = new Filter(curPipelineReference, BuiltInParameter.RBS_SYSTEM_ABBREVIATION_PARAM);
+                    //Get the elements
+                    collector.OfClass(typeof(PipingSystemType)).WherePasses(filter.epf); //Just to try something fun, if not working -- dispose
+                    //Select correct systemType
+                    //PipingSystemType sQuery = (from PipingSystemType st in collector
+                    //                           where string.Equals(st.Abbreviation, curPipelineReference)
+                    //                           select st).FirstOrDefault();
+                    PipingSystemType sQuery = (PipingSystemType)collector.FirstElement();
+
+                    if(sQuery != null) CurElementSymbol.PipingSystemType = sQuery;
+
                     //Add the extracted element to the collection
                     collection.Elements.Add(CurElementSymbol);
                     collection.Position.Add(iterationCounter);

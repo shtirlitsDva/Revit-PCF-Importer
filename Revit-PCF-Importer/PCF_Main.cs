@@ -57,7 +57,7 @@ namespace Revit_PCF_Importer
             //This method processes elements
             foreach (ElementSymbol elementSymbol in ExtractedElementCollection.Elements)
             {
-                pcfDict.ProcessLevel1Keywords(elementSymbol);
+                pcfDict.ProcessTopLevelKeywords(elementSymbol);
             }
 
 
