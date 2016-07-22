@@ -418,6 +418,8 @@ namespace BuildingCoder
 
         const double _convertFootToMm = 12 * 25.4;
 
+        const double _convertInchToFoot = 12;
+
         const double _convertFootToMeter
           = _convertFootToMm * 0.001;
 
@@ -440,6 +442,14 @@ namespace BuildingCoder
         public static double MmToFoot(double length)
         {
             return length / _convertFootToMm;
+        }
+
+        /// <summary>
+        /// Convert a given length in inches to feet.
+        /// </summary>
+        public static double InchToFoot(double length)
+        {
+            return length / _convertInchToFoot;
         }
 
         /// <summary>

@@ -43,7 +43,11 @@ namespace Revit_PCF_Importer
         {
             var dictionary = new Dictionary<string, Func<ElementSymbol, string, Result>>
             {
-                {"END-POINT", _keywordProcessor.END_POINT}
+                {"END-POINT", _keywordProcessor.END_POINT},
+                {"MATERIAL-IDENTIFIER", _keywordProcessor.MATERIAL_IDENTIFIER },
+                {"DESCRIPTION", _keywordProcessor.DESCRIPTION },
+                {"UCI", _keywordProcessor.UCI },
+                {"UNIQUE-COMPONENT-IDENTIFIER", _keywordProcessor.UCI }
             };
             return dictionary;
         }
@@ -57,8 +61,8 @@ namespace Revit_PCF_Importer
             }
             else
             {
-                _keywordProcessor.ELEMENT_TYPE_NOT_IMPLEMENTED(elementSymbol);
-                return Result.Failed;
+                Result result = _keywordProcessor.ELEMENT_TYPE_NOT_IMPLEMENTED(elementSymbol);
+                return result;
             }
         }
 
@@ -71,8 +75,43 @@ namespace Revit_PCF_Importer
             }
             else
             {
-                _keywordProcessor.ELEMENT_ATTRIBUTE_NOT_IMPLEMENTED(elementSymbol, line);
-                return Result.Failed;
+                Result result = _keywordProcessor.ELEMENT_ATTRIBUTE_NOT_IMPLEMENTED(elementSymbol, line);
+                return result;
+            }
+        }
+    }
+
+    public class PCF_Creator : ICreateElements
+    {
+        private readonly IProcessElements _processElements;
+        private Dictionary<string, Func<ElementSymbol, Result>> _elementCreationDictionary;
+
+        public PCF_Creator(IProcessElements processElements)
+        {
+            _processElements = processElements;
+            _elementCreationDictionary = CreateElementCreationDictionary();
+        }
+
+        private Dictionary<string, Func<ElementSymbol, Result>> CreateElementCreationDictionary()
+        {
+            var dictionary = new Dictionary<string, Func<ElementSymbol, Result>>
+            {
+                {"PIPE", _processElements.PIPE }
+            };
+            return dictionary;
+        }
+
+        public Result SendElementsToCreation(ElementSymbol elementSymbol)
+        {
+            if (_elementCreationDictionary.ContainsKey(elementSymbol.ElementType))
+            {
+                Result result = _elementCreationDictionary[elementSymbol.ElementType].Invoke(elementSymbol);
+                return result;
+            }
+            else
+            {
+                Result result = _processElements.ELEMENT_TYPE_NOT_IMPLEMENTED(elementSymbol);
+                return result;
             }
         }
     }

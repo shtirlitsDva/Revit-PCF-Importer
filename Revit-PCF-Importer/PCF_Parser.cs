@@ -34,15 +34,18 @@ namespace Revit_PCF_Importer
         //Element level keywords
         Result ELEMENT_ATTRIBUTE_NOT_IMPLEMENTED(ElementSymbol elementSymbol, string line);
         Result END_POINT(ElementSymbol elementSymbol, string line);
+        Result MATERIAL_IDENTIFIER(ElementSymbol elementSymbol, string line);
+        Result DESCRIPTION(ElementSymbol elementSymbol, string line);
+        Result UCI(ElementSymbol elementSymbol, string line);
     }
 
     public class KeywordProcessor : IKeywordProcessor
     {
-        private Document doc = PCFImport.doc; //This code to expose doc to class, because I don't want to pass it to each method in the chain
-                                              //See http://forums.autodesk.com/t5/revit-api/accessing-the-document-from-c-form-externalcommanddata-issue/td-p/4773407
+        //private Document doc = PCFImport.doc; //This code to expose doc to class, because I don't want to pass it to each method in the chain
+        //                                      //See http://forums.autodesk.com/t5/revit-api/accessing-the-document-from-c-form-externalcommanddata-issue/td-p/4773407
 
-        private PCF_Dictionary pcfDict = new PCF_Dictionary(new KeywordProcessor());
-
+        private PCF_Dictionary pcfDict = PCFImport.PcfDict;
+       
         #region Top level keywords
         public Result ELEMENT_TYPE_NOT_IMPLEMENTED(ElementSymbol elementSymbol)
         {
@@ -163,24 +166,55 @@ namespace Revit_PCF_Importer
             double X = double.Parse(endPointLine[0]);
             double Y = double.Parse(endPointLine[1]);
             double Z = double.Parse(endPointLine[2]);
+            double diameter = double.Parse(endPointLine[3]);
+
+            if (iv.UNITS_CO_ORDS_MM) { X = Util.MmToFoot(X); Y = Util.MmToFoot(Y); Z = Util.MmToFoot(Z); }
+
+            if (iv.UNITS_CO_ORDS_INCH) { X = Util.InchToFoot(X); Y = Util.InchToFoot(Y); Z = Util.InchToFoot(Z); }
+
+            if (iv.UNITS_BORE_MM) diameter = Util.MmToFoot(diameter);
+
+            if (iv.UNITS_BORE_INCH) diameter = Util.InchToFoot(diameter);
 
             if (!elementSymbol.EndPoint1.Initialized)
             {
                 elementSymbol.EndPoint1.Xyz = new XYZ(X, Y, Z);
-                elementSymbol.EndPoint1.Diameter = double.Parse(endPointLine[3]);
+                elementSymbol.EndPoint1.Diameter = diameter;
                 elementSymbol.EndPoint1.Initialized = true;
                 return Result.Succeeded;
             }
             if (!elementSymbol.EndPoint2.Initialized)
             {
                 elementSymbol.EndPoint2.Xyz = new XYZ(X, Y, Z);
-                elementSymbol.EndPoint2.Diameter = double.Parse(endPointLine[3]);
+                elementSymbol.EndPoint2.Diameter = diameter;
                 elementSymbol.EndPoint2.Initialized = true;
                 return Result.Succeeded;
             }
             //The rest of line is ignored for now
             Util.ErrorMsg("Element at line number " + elementSymbol.Position + " has more than two END-POINTS, which is not allowed!");
             return Result.Failed;
+        }
+
+        public Result MATERIAL_IDENTIFIER(ElementSymbol elementSymbol, string line)
+        {
+            int matId = int.Parse(Parser.GetRestOfTheLine(line));
+            elementSymbol.MaterialIdentifier = matId;
+            return Result.Succeeded;
+        }
+
+        public Result DESCRIPTION(ElementSymbol elementSymbol, string line)
+        {
+            string description = Parser.GetRestOfTheLine(line);
+            elementSymbol.MaterialDescription = description;
+            return Result.Succeeded;
+        }
+
+        public Result UCI(ElementSymbol elementSymbol, string line)
+        {
+            string uci = Parser.GetRestOfTheLine(line);
+            Guid guid = new Guid(uci);
+            elementSymbol.guid = guid;
+            return Result.Succeeded;
         }
         #endregion
     }

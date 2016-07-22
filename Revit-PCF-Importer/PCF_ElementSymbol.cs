@@ -23,9 +23,11 @@ namespace Revit_PCF_Importer
         public PointInSpace CoOrds = new PointInSpace("CO-ORDS");
         public PointInSpace CentrePoint = new PointInSpace("CENTRE-POINT");
         public PointInSpace Branch1Point = new PointInSpace("BRANCH1-POINT");
-        public int MaterialIdentifier { get; set; }
-        public string MaterialDescription { get; set; }
-        public double Angle { get; set; }
+        public int MaterialIdentifier { get; set; } = 0;
+        public string MaterialDescription { get; set; } = string.Empty;
+        public double Angle { get; set; } = -999;
+        public Guid guid { get; set; } = Guid.NewGuid();
+        public Element CreatedElement { get; set; } = null;
     }
     /// <summary>
     /// Holds the coordinate information read from file.
@@ -47,7 +49,7 @@ namespace Revit_PCF_Importer
 
     public class ElementCollection
     {
-        public IList<ElementSymbol> Elements { get; set; } = new List<ElementSymbol>(); //The array to hold all the elements
-        public IList<int> Position { get; set; } = new List<int>();//Holds the keywords line number in the file
+        public IList<ElementSymbol> Elements { get; set; } = new List<ElementSymbol>(); //The list to hold all the elements
+        public IList<int> Position { get; set; } = new List<int>();//Holds the line number in the file
     }
 }
