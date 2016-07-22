@@ -68,9 +68,11 @@ namespace Revit_PCF_Importer
 
         public Result ProcessElementLevelKeywords(ElementSymbol elementSymbol, string line)
         {
-            if (_elementLevelDictionary.ContainsKey(Parser.GetElementKeyword(line)))
+            string keyword = Parser.GetElementKeyword(line);
+
+            if (keyword != null && _elementLevelDictionary.ContainsKey(keyword))
             {
-                Result result = _elementLevelDictionary[Parser.GetElementKeyword(line)].Invoke(elementSymbol, line);
+                Result result = _elementLevelDictionary[keyword].Invoke(elementSymbol, line);
                 return result;
             }
             else

@@ -646,6 +646,8 @@ namespace PCF_Functions
 
         public static string GetElementKeyword(string line)
         {
+            //Declare a StringCollection to hold the matches
+            StringCollection resultList = new StringCollection();
             //Execute keyword handling
             //Define a Regex to parse the input
             Regex parseWords = new Regex(@"(\S+)");
@@ -653,8 +655,15 @@ namespace PCF_Functions
             //Define a Match to handle the results from Regex
             Match match = parseWords.Match(line);
 
+            while (match.Success)
+            {
+                //Only add the result if it is not a white space or null
+                if (!string.IsNullOrEmpty(match.Value)) resultList.Add(match.Value);
+                match = match.NextMatch();
+            }
+
             //Separate the keyword and the rest of words from the results
-            string keyword = match.Value;
+            string keyword = resultList[0];
 
             return keyword;
         }

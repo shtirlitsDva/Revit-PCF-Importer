@@ -44,8 +44,6 @@ namespace Revit_PCF_Importer
         //private Document doc = PCFImport.doc; //This code to expose doc to class, because I don't want to pass it to each method in the chain
         //                                      //See http://forums.autodesk.com/t5/revit-api/accessing-the-document-from-c-form-externalcommanddata-issue/td-p/4773407
 
-        private PCF_Dictionary pcfDict = PCFImport.PcfDict;
-       
         #region Top level keywords
         public Result ELEMENT_TYPE_NOT_IMPLEMENTED(ElementSymbol elementSymbol)
         {
@@ -142,14 +140,17 @@ namespace Revit_PCF_Importer
 
         public Result PIPE(ElementSymbol elementSymbol)
         {
-            StringCollection source = elementSymbol.SourceData;
-
-            foreach (string s in source)
+            //StringCollection source = elementSymbol.SourceData;
+            
+            foreach (string line in elementSymbol.SourceData)
             {
-                Result result = pcfDict.ProcessElementLevelKeywords(elementSymbol, s);
-                return result;
+                if (line == null && elementSymbol.SourceData == null) continue;
+                Result result = PCFImport.PcfDict.ProcessElementLevelKeywords(elementSymbol, line);
+                if (Result.Succeeded == result) continue;
+                if (Result.Failed == result) return result;
             }
-            return Result.Failed;
+            
+            return Result.Succeeded;
         }
         #endregion
 
@@ -211,9 +212,9 @@ namespace Revit_PCF_Importer
 
         public Result UCI(ElementSymbol elementSymbol, string line)
         {
-            string uci = Parser.GetRestOfTheLine(line);
-            Guid guid = new Guid(uci);
-            elementSymbol.guid = guid;
+            //string uci = Parser.GetRestOfTheLine(line);
+            //Guid guid = new Guid(uci);
+            //elementSymbol.guid = guid;
             return Result.Succeeded;
         }
         #endregion
