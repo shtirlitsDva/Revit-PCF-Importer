@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -34,6 +35,8 @@ namespace Revit_PCF_Importer
         //Element level keywords
         Result ELEMENT_ATTRIBUTE_NOT_IMPLEMENTED(ElementSymbol elementSymbol, string line);
         Result END_POINT(ElementSymbol elementSymbol, string line);
+        Result CENTRE_POINT(ElementSymbol elementSymbol, string line);
+        Result ANGLE(ElementSymbol elementSymbol, string line);
         Result MATERIAL_IDENTIFIER(ElementSymbol elementSymbol, string line);
         Result DESCRIPTION(ElementSymbol elementSymbol, string line);
         Result UCI(ElementSymbol elementSymbol, string line);
@@ -140,16 +143,12 @@ namespace Revit_PCF_Importer
 
         public Result PIPE(ElementSymbol elementSymbol)
         {
-            //StringCollection source = elementSymbol.SourceData;
-            
             foreach (string line in elementSymbol.SourceData)
             {
-                if (line == null && elementSymbol.SourceData == null) continue;
                 Result result = PCFImport.PcfDict.ProcessElementLevelKeywords(elementSymbol, line);
                 if (Result.Succeeded == result) continue;
                 if (Result.Failed == result) return result;
             }
-            
             return Result.Succeeded;
         }
         #endregion
@@ -164,36 +163,41 @@ namespace Revit_PCF_Importer
         {
             StringCollection endPointLine = Parser.GetRestOfTheLineInStringCollection(line);
 
-            double X = double.Parse(endPointLine[0]);
-            double Y = double.Parse(endPointLine[1]);
-            double Z = double.Parse(endPointLine[2]);
-            double diameter = double.Parse(endPointLine[3]);
-
-            if (iv.UNITS_CO_ORDS_MM) { X = Util.MmToFoot(X); Y = Util.MmToFoot(Y); Z = Util.MmToFoot(Z); }
-
-            if (iv.UNITS_CO_ORDS_INCH) { X = Util.InchToFoot(X); Y = Util.InchToFoot(Y); Z = Util.InchToFoot(Z); }
-
-            if (iv.UNITS_BORE_MM) diameter = Util.MmToFoot(diameter);
-
-            if (iv.UNITS_BORE_INCH) diameter = Util.InchToFoot(diameter);
-
             if (!elementSymbol.EndPoint1.Initialized)
             {
-                elementSymbol.EndPoint1.Xyz = new XYZ(X, Y, Z);
-                elementSymbol.EndPoint1.Diameter = diameter;
+                elementSymbol.EndPoint1.Xyz = Parser.ParseXyz(endPointLine);
+                elementSymbol.EndPoint1.Diameter = Parser.ParseDiameter(endPointLine);
                 elementSymbol.EndPoint1.Initialized = true;
                 return Result.Succeeded;
             }
             if (!elementSymbol.EndPoint2.Initialized)
             {
-                elementSymbol.EndPoint2.Xyz = new XYZ(X, Y, Z);
-                elementSymbol.EndPoint2.Diameter = diameter;
+                elementSymbol.EndPoint2.Xyz = Parser.ParseXyz(endPointLine);
+                elementSymbol.EndPoint2.Diameter = Parser.ParseDiameter(endPointLine);
                 elementSymbol.EndPoint2.Initialized = true;
                 return Result.Succeeded;
             }
             //The rest of line is ignored for now
             Util.ErrorMsg("Element at line number " + elementSymbol.Position + " has more than two END-POINTS, which is not allowed!");
             return Result.Failed;
+        }
+
+        public Result CENTRE_POINT(ElementSymbol elementSymbol, string line)
+        {
+            StringCollection endPointLine = Parser.GetRestOfTheLineInStringCollection(line);
+
+            elementSymbol.CentrePoint.Xyz = Parser.ParseXyz(endPointLine);
+
+            return Result.Succeeded;
+        }
+
+        public Result ANGLE(ElementSymbol elementSymbol, string line)
+        {
+            double angle = double.Parse(Parser.GetRestOfTheLine(line), CultureInfo.InvariantCulture);
+
+            elementSymbol.Angle = angle/100;
+
+            return Result.Succeeded;
         }
 
         public Result MATERIAL_IDENTIFIER(ElementSymbol elementSymbol, string line)
@@ -212,7 +216,8 @@ namespace Revit_PCF_Importer
 
         public Result UCI(ElementSymbol elementSymbol, string line)
         {
-            //string uci = Parser.GetRestOfTheLine(line);
+            string uci = Parser.GetRestOfTheLine(line);
+            elementSymbol.UCI = uci;
             //Guid guid = new Guid(uci);
             //elementSymbol.guid = guid;
             return Result.Succeeded;

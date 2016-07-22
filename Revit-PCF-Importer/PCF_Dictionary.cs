@@ -44,6 +44,8 @@ namespace Revit_PCF_Importer
             var dictionary = new Dictionary<string, Func<ElementSymbol, string, Result>>
             {
                 {"END-POINT", _keywordProcessor.END_POINT},
+                {"CENTRE-POINT", _keywordProcessor.CENTRE_POINT },
+                {"ANGLE", _keywordProcessor.ANGLE },
                 {"MATERIAL-IDENTIFIER", _keywordProcessor.MATERIAL_IDENTIFIER },
                 {"DESCRIPTION", _keywordProcessor.DESCRIPTION },
                 {"UCI", _keywordProcessor.UCI },
@@ -70,7 +72,7 @@ namespace Revit_PCF_Importer
         {
             string keyword = Parser.GetElementKeyword(line);
 
-            if (keyword != null && _elementLevelDictionary.ContainsKey(keyword))
+            if (_elementLevelDictionary.ContainsKey(keyword))
             {
                 Result result = _elementLevelDictionary[keyword].Invoke(elementSymbol, line);
                 return result;

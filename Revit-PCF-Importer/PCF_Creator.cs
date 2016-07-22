@@ -44,6 +44,13 @@ namespace Revit_PCF_Importer
                 Pipe pipe = Pipe.Create(doc, elementSymbol.PipingSystemType.Id, pipeTypeId, levelId,
                     elementSymbol.EndPoint1.Xyz, elementSymbol.EndPoint2.Xyz);
 
+                Parameter parameter = pipe.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
+
+                parameter.Set(elementSymbol.EndPoint1.Diameter);
+
+                // Regenerate the docucment before trying to read a parameter that has been edited
+                pipe.Document.Regenerate();
+
                 elementSymbol.CreatedElement = (Element) pipe;
                 return Result.Succeeded;
             }

@@ -26,7 +26,8 @@ namespace Revit_PCF_Importer
         public int MaterialIdentifier { get; set; } = 0;
         public string MaterialDescription { get; set; } = string.Empty;
         public double Angle { get; set; } = -999;
-        public Guid guid { get; set; } = Guid.NewGuid();
+        //public Guid guid { get; set; } = null;
+        public string UCI { get; set; } = string.Empty;
         public Element CreatedElement { get; set; } = null;
     }
     /// <summary>

@@ -646,8 +646,6 @@ namespace PCF_Functions
 
         public static string GetElementKeyword(string line)
         {
-            //Declare a StringCollection to hold the matches
-            StringCollection resultList = new StringCollection();
             //Execute keyword handling
             //Define a Regex to parse the input
             Regex parseWords = new Regex(@"(\S+)");
@@ -655,15 +653,8 @@ namespace PCF_Functions
             //Define a Match to handle the results from Regex
             Match match = parseWords.Match(line);
 
-            while (match.Success)
-            {
-                //Only add the result if it is not a white space or null
-                if (!string.IsNullOrEmpty(match.Value)) resultList.Add(match.Value);
-                match = match.NextMatch();
-            }
-
             //Separate the keyword and the rest of words from the results
-            string keyword = resultList[0];
+            string keyword = match.Value;
 
             return keyword;
         }
@@ -775,12 +766,30 @@ namespace PCF_Functions
             }
         }
 
-        //public static void ProcessLevel1Keywords(ElementCollection collection)
-        //{
-        //    foreach (ElementSymbol es in collection.Elements)
-        //    {
-                
-        //    }
-        //}
+        public static XYZ ParseXyz(StringCollection endPointLine)
+        {
+            double X = double.Parse(endPointLine[0], CultureInfo.InvariantCulture);
+            double Y = double.Parse(endPointLine[1], CultureInfo.InvariantCulture);
+            double Z = double.Parse(endPointLine[2], CultureInfo.InvariantCulture);
+
+            if (iv.UNITS_CO_ORDS_MM) { X = Util.MmToFoot(X); Y = Util.MmToFoot(Y); Z = Util.MmToFoot(Z); }
+
+            if (iv.UNITS_CO_ORDS_INCH) { X = Util.InchToFoot(X); Y = Util.InchToFoot(Y); Z = Util.InchToFoot(Z); }
+
+            XYZ xyz = new XYZ(X,Y,Z);
+
+            return xyz;
+        }
+
+        public static double ParseDiameter(StringCollection endPointLine)
+        {
+            double diameter = double.Parse(endPointLine[3], CultureInfo.InvariantCulture);
+
+            if (iv.UNITS_BORE_MM) diameter = Util.MmToFoot(diameter);
+
+            if (iv.UNITS_BORE_INCH) diameter = Util.InchToFoot(diameter);
+
+            return diameter;
+        }
     }
 }
