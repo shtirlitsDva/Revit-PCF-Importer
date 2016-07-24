@@ -30,7 +30,7 @@ namespace Revit_PCF_Importer
         Result UNITS_CO_ORDS(ElementSymbol elementSymbol);
         Result UNITS_WEIGHT(ElementSymbol elementSymbol);
         Result PIPELINE_REFERENCE(ElementSymbol elementSymbol);
-        Result PIPE(ElementSymbol elementSymbol);
+        Result GENERAL(ElementSymbol elementSymbol);
 
         //Element level keywords
         Result ELEMENT_ATTRIBUTE_NOT_IMPLEMENTED(ElementSymbol elementSymbol, string line);
@@ -141,7 +141,12 @@ namespace Revit_PCF_Importer
             }
         }
 
-        public Result PIPE(ElementSymbol elementSymbol)
+        /// <summary>
+        /// General handles all usual piping elements with no special requirements.
+        /// </summary>
+        /// <param name="elementSymbol"></param>
+        /// <returns></returns>
+        public Result GENERAL(ElementSymbol elementSymbol)
         {
             foreach (string line in elementSymbol.SourceData)
             {

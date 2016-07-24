@@ -34,7 +34,8 @@ namespace Revit_PCF_Importer
                 {"UNITS-BOLT-LENGTH", _keywordProcessor.ELEMENT_TYPE_NOT_IMPLEMENTED},
                 {"UNITS-WEIGHT-LENGTH", _keywordProcessor.ELEMENT_TYPE_NOT_IMPLEMENTED},
                 {"PIPELINE-REFERENCE", _keywordProcessor.PIPELINE_REFERENCE},
-                {"PIPE", _keywordProcessor.PIPE}
+                {"PIPE", _keywordProcessor.GENERAL},
+                {"ELBOW", _keywordProcessor.GENERAL}
             };
             return dictionary;
         }
@@ -100,7 +101,8 @@ namespace Revit_PCF_Importer
         {
             var dictionary = new Dictionary<string, Func<ElementSymbol, Result>>
             {
-                {"PIPE", _processElements.PIPE }
+                {"PIPE", _processElements.PIPE },
+                {"ELBOW", _processElements.ELBOW }
             };
             return dictionary;
         }

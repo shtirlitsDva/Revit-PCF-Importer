@@ -27,7 +27,7 @@ namespace Revit_PCF_Importer
     public class PCFImport : IExternalCommand
     {
         //Declare the element collector
-        public ElementCollection ExtractedElementCollection;
+        public static ElementCollection ExtractedElementCollection;
         public static Autodesk.Revit.DB.Document doc; //This code to expose doc to class, because I don't want to pass it to each method in the chain;
         //See http://forums.autodesk.com/t5/revit-api/accessing-the-document-from-c-form-externalcommanddata-issue/td-p/4773407;
         //Declare static dictionary for parsing
