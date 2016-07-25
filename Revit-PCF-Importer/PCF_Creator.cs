@@ -26,6 +26,7 @@ namespace Revit_PCF_Importer
         Result ELEMENT_TYPE_NOT_IMPLEMENTED(ElementSymbol elementSymbol);
         Result PIPE(ElementSymbol elementSymbol);
         Result ELBOW(ElementSymbol elementSymbol);
+        Result TEE(ElementSymbol elementSymbol);
 }
 
     public class ProcessElements : IProcessElements
@@ -83,78 +84,73 @@ namespace Revit_PCF_Importer
                     return Result.Failed;
                 }
 
-                //Build a direct shape with TessellatedShapeBuilder
-                List<XYZ> args = new List<XYZ>(3);
+                #region Placing by face reference
 
-                TessellatedShapeBuilder builder = new TessellatedShapeBuilder();
-                //http://thebuildingcoder.typepad.com/blog/2014/05/directshape-performance-and-minimum-size.html
-                builder.OpenConnectedFaceSet(false);
-                args.Add(elementSymbol.CentrePoint.Xyz);
-                args.Add(elementSymbol.EndPoint1.Xyz);
-                args.Add(elementSymbol.EndPoint2.Xyz);
-                builder.AddFace(new TessellatedFace(args,ElementId.InvalidElementId));
-                builder.CloseConnectedFaceSet();
-                builder.Build();
-                TessellatedShapeBuilderResult result = builder.GetBuildResult();
+                ////Build a direct shape with TessellatedShapeBuilder
+                //List<XYZ> args = new List<XYZ>(3);
 
-                var resultList = result.GetGeometricalObjects();
+                //TessellatedShapeBuilder builder = new TessellatedShapeBuilder();
+                ////http://thebuildingcoder.typepad.com/blog/2014/05/directshape-performance-and-minimum-size.html
+                //builder.OpenConnectedFaceSet(false);
+                //args.Add(elementSymbol.CentrePoint.Xyz);
+                //args.Add(elementSymbol.EndPoint1.Xyz);
+                //args.Add(elementSymbol.EndPoint2.Xyz);
+                //builder.AddFace(new TessellatedFace(args,ElementId.InvalidElementId));
+                //builder.CloseConnectedFaceSet();
+                //builder.Build();
+                //TessellatedShapeBuilderResult result = builder.GetBuildResult();
 
-                var solid = resultList[0] as Solid;
-                Face face = solid.Faces.get_Item(0);
+                //var resultList = result.GetGeometricalObjects();
 
-                DirectShape ds = DirectShape.CreateElement(doc, new ElementId(BuiltInCategory.OST_GenericModel));
-                ds.ApplicationId = "Application id";
-                ds.ApplicationDataId = "Geometry object id";
-                ds.Name = "Elbow " + elementSymbol.Position;
-                DirectShapeOptions dso = ds.GetOptions();
-                dso.ReferencingOption = DirectShapeReferencingOption.Referenceable;
-                ds.SetOptions(dso);
-                ds.SetShape(resultList);
+                //var solidShape = resultList[0] as Solid;
+                //Face face = solidShape.Faces.get_Item(0);
+
+                //DirectShape ds = DirectShape.CreateElement(doc, new ElementId(BuiltInCategory.OST_GenericModel));
+                //ds.ApplicationId = "Application id";
+                //ds.ApplicationDataId = "Geometry object id";
+                //ds.Name = "Elbow " + elementSymbol.Position;
+                //DirectShapeOptions dso = ds.GetOptions();
+                //dso.ReferencingOption = DirectShapeReferencingOption.Referenceable;
+                //ds.SetOptions(dso);
+                //ds.SetShape(resultList);
                 //Options options = new Options();
                 //options.ComputeReferences = true;
-                //var geometryElement = ds.get_Geometry(options);
-
-                ;
-
+                //doc.Regenerate();
+                //FilteredElementCollector collectorDs = new FilteredElementCollector(doc);
+                //collectorDs.OfClass(typeof (DirectShape));
+                //var query = from Element e in collectorDs
+                //    where string.Equals(e.Name, "Elbow " + elementSymbol.Position)
+                //    select e;
+                //Element elem = query.FirstOrDefault();
+                //var geometryElement = elem.get_Geometry(options);
+                //;
+                //Face face = null;
                 //foreach (GeometryObject geometry in geometryElement)
                 //{
-                //    GeometryInstance instance = geometry as GeometryInstance;
-                //    if (null != instance)
+                //    Solid instance = geometry as Solid;
+                //    if (null == instance || 0 == instance.Faces.Size || 0 == instance.Edges.Size) { continue; }
+                //    // Get the faces
+                //    foreach (Face f in instance.Faces)
                 //    {
-                //        foreach (GeometryObject instObj in instance.GetInstanceGeometry())
-                //        {
-                //            Solid solid = instObj as Solid;
-                //            if (null == solid || 0 == solid.Faces.Size || 0 == solid.Edges.Size) { continue; }
-                //            // Get the faces
-                //            foreach (Face f in solid.Faces)
-                //            {
-                //                face = f;
-                //            }}}}
-                ;
-                if (face == null)
-                {
-                    Util.ErrorMsg("No valid face detected to place the fitting for element at position "+elementSymbol.Position);
-                    return Result.Failed;
-                }
-                var faceRef = face.Reference;
-                ;
-                //Finally place the elbow
-                //Direction -- third parameter to the create method
-                XYZ vC = elementSymbol.EndPoint1.Xyz - elementSymbol.CentrePoint.Xyz;
+                //        face = f;
+                //    }
+                //}
+                //;
+                //if (face == null)
+                //{
+                //    Util.ErrorMsg("No valid face detected to place the fitting for element at position "+elementSymbol.Position);
+                //    return Result.Failed;
+                //}
+                //var faceRef = face.Reference;
+                //;
+                ////Finally place the elbow
+                ////Direction -- third parameter to the create method
+                //XYZ vC = elementSymbol.EndPoint1.Xyz - elementSymbol.CentrePoint.Xyz;
+                //Element element = doc.Create.NewFamilyInstance(faceRef, elementSymbol.CentrePoint.Xyz, vC,
+                //    (FamilySymbol) elbowSymbol);
 
-                Element element = doc.Create.NewFamilyInstance(face, elementSymbol.CentrePoint.Xyz, vC,
-                    (FamilySymbol) elbowSymbol);
-                
-                FamilyInstance elbow = (FamilyInstance)element;
+                #endregion
 
-                double diameter = elementSymbol.EndPoint1.Diameter;
-
-                elbow.LookupParameter("Nominal Diameter").Set(diameter); //Implement a procedure to select the parameter by name supplied by user
-
-
-
-                
-                
                 #region Create by NewElbowFitting
 
                 //var query = (from ElementSymbol es in PCFImport.ExtractedElementCollection.Elements
@@ -188,41 +184,41 @@ namespace Revit_PCF_Importer
 
                 #region Create by Directly Placing families
 
-                //Element element = doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, (FamilySymbol)elbowSymbol, StructuralType.NonStructural);
+                Element element = doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, (FamilySymbol)elbowSymbol, StructuralType.NonStructural);
 
-                //FamilyInstance elbow = (FamilyInstance) element;
+                FamilyInstance elbow = (FamilyInstance)element;
 
-                //double diameter = elementSymbol.EndPoint1.Diameter;
+                double diameter = elementSymbol.EndPoint1.Diameter;
 
-                //elbow.LookupParameter("Nominal Diameter").Set(diameter); //Implement a procedure to select the parameter by name supplied by user
+                elbow.LookupParameter("Nominal Diameter").Set(diameter); //Implement a procedure to select the parameter by name supplied by user
 
-                ////Begin geometric analysis to rotate the endpoints to actual locations
-                ////Get connectors from the placed family
-                //ConnectorSet cs = ((FamilyInstance)element).MEPModel.ConnectorManager.Connectors;
+                //Begin geometric analysis to rotate the endpoints to actual locations
+                //Get connectors from the placed family
+                ConnectorSet cs = ((FamilyInstance)element).MEPModel.ConnectorManager.Connectors;
 
-                //Connector familyConnector1 = (from Connector c in cs where true select c).First();
-                //Connector familyConnector2 = (from Connector c in cs where true select c).Last();
+                Connector familyConnector1 = (from Connector c in cs where true select c).First();
+                Connector familyConnector2 = (from Connector c in cs where true select c).Last();
 
-                //XYZ vA = familyConnector1.Origin - elementSymbol.CentrePoint.Xyz; //To define a vector: v = p2 - p1
-                //XYZ vC = elementSymbol.EndPoint1.Xyz - elementSymbol.CentrePoint.Xyz;
+                XYZ vA = familyConnector1.Origin - elementSymbol.CentrePoint.Xyz; //To define a vector: v = p2 - p1
+                XYZ vC = elementSymbol.EndPoint1.Xyz - elementSymbol.CentrePoint.Xyz;
 
-                //XYZ normRotAxis = vC.CrossProduct(vA).Normalize();
+                XYZ normRotAxis = vC.CrossProduct(vA).Normalize();
 
-                //double dotProduct = vC.DotProduct(vA);
-                //double rotAngle = System.Math.Acos(dotProduct);
-                //var rotLine = Line.CreateUnbound(elementSymbol.CentrePoint.Xyz, normRotAxis);
+                double dotProduct = vC.DotProduct(vA);
+                double rotAngle = System.Math.Acos(dotProduct);
+                var rotLine = Line.CreateUnbound(elementSymbol.CentrePoint.Xyz, normRotAxis);
 
-                ////Test rotation
-                //Transform trf = Transform.CreateRotationAtPoint(normRotAxis, rotAngle, elementSymbol.CentrePoint.Xyz);
-                //XYZ testRotation = trf.OfVector(vA).Normalize();
+                //Test rotation
+                Transform trf = Transform.CreateRotationAtPoint(normRotAxis, rotAngle, elementSymbol.CentrePoint.Xyz);
+                XYZ testRotation = trf.OfVector(vA).Normalize();
 
-                //if ((vC.DotProduct(testRotation) > 0.00001) == false) rotAngle = -rotAngle;
+                if ((vC.DotProduct(testRotation) > 0.00001) == false) rotAngle = -rotAngle;
 
                 //elbow.Location.Rotate(rotLine, rotAngle);
 
-                ////Store the reference of the created element in the symbol object.
-                //elementSymbol.CreatedElement = element;
-                //;
+                //Store the reference of the created element in the symbol object.
+                elementSymbol.CreatedElement = element;
+                ;
 
                 #endregion
             }
@@ -230,6 +226,47 @@ namespace Revit_PCF_Importer
             {
                 Console.WriteLine(e);
             }
+
+            return Result.Succeeded;
+        }
+
+        public Result TEE(ElementSymbol elementSymbol)
+        {
+            try
+            {
+                //Choose pipe type.Hardcoded value until a configuring process is devised.
+                
+                FilteredElementCollector collector = new FilteredElementCollector(doc);
+
+                //Determine if the tee is reducing
+                if (!elementSymbol.Branch1Point.Diameter.Equals(elementSymbol.EndPoint1.Diameter))
+                    elementSymbol.IsReducing = true;
+                Filter filter;
+                if (!elementSymbol.IsReducing) filter = new Filter("EN 10253-2 - Tee: Tee Type B", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
+                else filter = new Filter("EN 10253-2 - Reducing Tee: Red Tee Type B", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
+                FamilySymbol teeSymbol = collector.WherePasses(filter.epf).Cast<FamilySymbol>().FirstOrDefault();
+
+                if (teeSymbol == null)
+                {
+                    Util.ErrorMsg("Family and Type for TEE at position " + elementSymbol.Position + " was not found.");
+                    return Result.Failed;
+                }
+
+                Element element = doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, teeSymbol, StructuralType.NonStructural);
+
+                FamilyInstance tee = (FamilyInstance)element;
+
+                double mainDiameter = elementSymbol.EndPoint1.Diameter;
+                double branchDiameter = elementSymbol.Branch1Point.Diameter;
+
+                tee.LookupParameter("Nominal Diameter 1").Set(mainDiameter); //Implement a procedure to select the parameter by name supplied by user
+                if (elementSymbol.IsReducing) tee.LookupParameter("Nominal Diameter 3").Set(branchDiameter);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
 
             return Result.Succeeded;
         }

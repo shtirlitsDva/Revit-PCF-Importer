@@ -46,6 +46,7 @@ namespace Revit_PCF_Importer
             {
                 {"END-POINT", _keywordProcessor.END_POINT},
                 {"CENTRE-POINT", _keywordProcessor.CENTRE_POINT },
+                {"BRANCH1-POINT", _keywordProcessor.BRANCH1_POINT },
                 {"ANGLE", _keywordProcessor.ANGLE },
                 {"MATERIAL-IDENTIFIER", _keywordProcessor.MATERIAL_IDENTIFIER },
                 {"DESCRIPTION", _keywordProcessor.DESCRIPTION },
@@ -102,7 +103,8 @@ namespace Revit_PCF_Importer
             var dictionary = new Dictionary<string, Func<ElementSymbol, Result>>
             {
                 {"PIPE", _processElements.PIPE },
-                {"ELBOW", _processElements.ELBOW }
+                {"ELBOW", _processElements.ELBOW },
+                {"TEE", _processElements.TEE }
             };
             return dictionary;
         }

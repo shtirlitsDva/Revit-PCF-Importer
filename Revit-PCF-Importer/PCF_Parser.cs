@@ -36,6 +36,7 @@ namespace Revit_PCF_Importer
         Result ELEMENT_ATTRIBUTE_NOT_IMPLEMENTED(ElementSymbol elementSymbol, string line);
         Result END_POINT(ElementSymbol elementSymbol, string line);
         Result CENTRE_POINT(ElementSymbol elementSymbol, string line);
+        Result BRANCH1_POINT(ElementSymbol elementSymbol, string line);
         Result ANGLE(ElementSymbol elementSymbol, string line);
         Result MATERIAL_IDENTIFIER(ElementSymbol elementSymbol, string line);
         Result DESCRIPTION(ElementSymbol elementSymbol, string line);
@@ -193,6 +194,15 @@ namespace Revit_PCF_Importer
 
             elementSymbol.CentrePoint.Xyz = Parser.ParseXyz(endPointLine);
 
+            return Result.Succeeded;
+        }
+
+        public Result BRANCH1_POINT(ElementSymbol elementSymbol, string line)
+        {
+            StringCollection endPointLine = Parser.GetRestOfTheLineInStringCollection(line);
+
+            elementSymbol.Branch1Point.Xyz = Parser.ParseXyz(endPointLine);
+            elementSymbol.Branch1Point.Diameter = Parser.ParseDiameter(endPointLine);
             return Result.Succeeded;
         }
 

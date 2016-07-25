@@ -29,6 +29,7 @@ namespace Revit_PCF_Importer
         //public Guid guid { get; set; } = null;
         public string UCI { get; set; } = string.Empty;
         public Element CreatedElement { get; set; } = null;
+        public bool IsReducing { get; set; } = false;
     }
     /// <summary>
     /// Holds the coordinate information read from file.
