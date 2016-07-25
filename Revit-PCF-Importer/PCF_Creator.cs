@@ -83,14 +83,11 @@ namespace Revit_PCF_Importer
                     return Result.Failed;
                 }
 
-                SolidOptions solidOptions = new SolidOptions(ElementId.InvalidElementId, ElementId.InvalidElementId);
-
-                //Frame frame = new Frame(elementSymbol.CentrePoint.Xyz, XYZ.BasisX, XYZ.BasisZ, XYZ.BasisY);
-
+                //Build a direct shape with TessellatedShapeBuilder
                 List<XYZ> args = new List<XYZ>(3);
 
                 TessellatedShapeBuilder builder = new TessellatedShapeBuilder();
-
+                //http://thebuildingcoder.typepad.com/blog/2014/05/directshape-performance-and-minimum-size.html
                 builder.OpenConnectedFaceSet(false);
 
                 args.Add(elementSymbol.CentrePoint.Xyz);
@@ -99,11 +96,75 @@ namespace Revit_PCF_Importer
 
                 builder.AddFace(new TessellatedFace(args,ElementId.InvalidElementId));
 
-                //http://thebuildingcoder.typepad.com/blog/2014/05/directshape-performance-and-minimum-size.html
+                builder.CloseConnectedFaceSet();
+                builder.Build();
 
-                //var surface = GeometryCreationUtilities.
+                TessellatedShapeBuilderResult result = builder.GetBuildResult();
 
+                DirectShape ds = DirectShape.CreateElement(doc, new ElementId(BuiltInCategory.OST_GenericModel));
+                ds.ApplicationId = "Application id";
+                ds.ApplicationDataId = "Geometry object id";
+                ds.Name = "Elbow " + elementSymbol.Position;
+                ds.SetShape(result.GetGeometricalObjects());
+
+                //Element dsElement = (Element) ds;
+                ;
+                //Find the reference to the created face
+                Options options = new Options();
+
+                options.ComputeReferences = true;
+
+                Face face = null;
+                
+                //var geometryElement = ds.get_Geometry(options);
+                ;
+
+                Element elem = (Element) ds;
+
+                GeometryElement geometryElement = elem.get_Geometry(options);
+
+
+                foreach (GeometryObject geometry in geometryElement)
+                {
+                    GeometryInstance instance = geometry as GeometryInstance;
+                    if (null != instance)
+                    {
+                        foreach (GeometryObject instObj in instance.GetInstanceGeometry())
+                        {
+                            Solid solid = instObj as Solid;
+                            if (null == solid || 0 == solid.Faces.Size || 0 == solid.Edges.Size) { continue; }
+                            // Get the faces
+                            foreach (Face f in solid.Faces)
+                            {
+                                face = f;
+                            }}}}
+                ;
+                if (face == null)
+                {
+                    Util.ErrorMsg("No valid face detected to place the fitting for element at position "+elementSymbol.Position);
+                    return Result.Failed;
+                }
+                var faceRef = face.Reference;
+                ;
+                //Finally place the elbow
+                //Direction -- third parameter to the create method
+                XYZ vC = elementSymbol.EndPoint1.Xyz - elementSymbol.CentrePoint.Xyz;
+
+                Element element = doc.Create.NewFamilyInstance(faceRef, elementSymbol.CentrePoint.Xyz, vC,
+                    (FamilySymbol) elbowSymbol);
+                
+                FamilyInstance elbow = (FamilyInstance)element;
+
+                double diameter = elementSymbol.EndPoint1.Diameter;
+
+                elbow.LookupParameter("Nominal Diameter").Set(diameter); //Implement a procedure to select the parameter by name supplied by user
+
+
+
+                
+                
                 #region Create by NewElbowFitting
+
                 //var query = (from ElementSymbol es in PCFImport.ExtractedElementCollection.Elements
                 //             where string.Equals("PIPE", es.ElementType)
                 //             select (MEPCurve)es.CreatedElement).ToList();
@@ -130,9 +191,11 @@ namespace Revit_PCF_Importer
                 //{
                 //    doc.Create.NewElbowFitting(c1, c2);
                 //}
+
                 #endregion
 
                 #region Create by Directly Placing families
+
                 //Element element = doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, (FamilySymbol)elbowSymbol, StructuralType.NonStructural);
 
                 //FamilyInstance elbow = (FamilyInstance) element;
@@ -168,6 +231,7 @@ namespace Revit_PCF_Importer
                 ////Store the reference of the created element in the symbol object.
                 //elementSymbol.CreatedElement = element;
                 //;
+
                 #endregion
             }
             catch (Exception e)
