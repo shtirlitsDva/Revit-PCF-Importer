@@ -89,55 +89,47 @@ namespace Revit_PCF_Importer
                 TessellatedShapeBuilder builder = new TessellatedShapeBuilder();
                 //http://thebuildingcoder.typepad.com/blog/2014/05/directshape-performance-and-minimum-size.html
                 builder.OpenConnectedFaceSet(false);
-
                 args.Add(elementSymbol.CentrePoint.Xyz);
                 args.Add(elementSymbol.EndPoint1.Xyz);
                 args.Add(elementSymbol.EndPoint2.Xyz);
-
                 builder.AddFace(new TessellatedFace(args,ElementId.InvalidElementId));
-
                 builder.CloseConnectedFaceSet();
                 builder.Build();
-
                 TessellatedShapeBuilderResult result = builder.GetBuildResult();
+
+                var resultList = result.GetGeometricalObjects();
+
+                var solid = resultList[0] as Solid;
+                Face face = solid.Faces.get_Item(0);
 
                 DirectShape ds = DirectShape.CreateElement(doc, new ElementId(BuiltInCategory.OST_GenericModel));
                 ds.ApplicationId = "Application id";
                 ds.ApplicationDataId = "Geometry object id";
                 ds.Name = "Elbow " + elementSymbol.Position;
-                ds.SetShape(result.GetGeometricalObjects());
-
-                //Element dsElement = (Element) ds;
-                ;
-                //Find the reference to the created face
-                Options options = new Options();
-
-                options.ComputeReferences = true;
-
-                Face face = null;
-                
+                DirectShapeOptions dso = ds.GetOptions();
+                dso.ReferencingOption = DirectShapeReferencingOption.Referenceable;
+                ds.SetOptions(dso);
+                ds.SetShape(resultList);
+                //Options options = new Options();
+                //options.ComputeReferences = true;
                 //var geometryElement = ds.get_Geometry(options);
+
                 ;
 
-                Element elem = (Element) ds;
-
-                GeometryElement geometryElement = elem.get_Geometry(options);
-
-
-                foreach (GeometryObject geometry in geometryElement)
-                {
-                    GeometryInstance instance = geometry as GeometryInstance;
-                    if (null != instance)
-                    {
-                        foreach (GeometryObject instObj in instance.GetInstanceGeometry())
-                        {
-                            Solid solid = instObj as Solid;
-                            if (null == solid || 0 == solid.Faces.Size || 0 == solid.Edges.Size) { continue; }
-                            // Get the faces
-                            foreach (Face f in solid.Faces)
-                            {
-                                face = f;
-                            }}}}
+                //foreach (GeometryObject geometry in geometryElement)
+                //{
+                //    GeometryInstance instance = geometry as GeometryInstance;
+                //    if (null != instance)
+                //    {
+                //        foreach (GeometryObject instObj in instance.GetInstanceGeometry())
+                //        {
+                //            Solid solid = instObj as Solid;
+                //            if (null == solid || 0 == solid.Faces.Size || 0 == solid.Edges.Size) { continue; }
+                //            // Get the faces
+                //            foreach (Face f in solid.Faces)
+                //            {
+                //                face = f;
+                //            }}}}
                 ;
                 if (face == null)
                 {
@@ -150,7 +142,7 @@ namespace Revit_PCF_Importer
                 //Direction -- third parameter to the create method
                 XYZ vC = elementSymbol.EndPoint1.Xyz - elementSymbol.CentrePoint.Xyz;
 
-                Element element = doc.Create.NewFamilyInstance(faceRef, elementSymbol.CentrePoint.Xyz, vC,
+                Element element = doc.Create.NewFamilyInstance(face, elementSymbol.CentrePoint.Xyz, vC,
                     (FamilySymbol) elbowSymbol);
                 
                 FamilyInstance elbow = (FamilyInstance)element;
