@@ -792,4 +792,26 @@ namespace PCF_Functions
             return diameter;
         }
     }
+
+    public class Helper
+    {
+        public static FamilyInstance PlaceAdaptiveMarkerLine(string typeName, XYZ p1, XYZ p2)
+        {
+            //Get the symbol
+            Filter filtermarker = new Filter("Marker Line: "+typeName, BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until implements
+            FamilySymbol markerSymbol = new FilteredElementCollector(PCFImport.doc).WherePasses(filtermarker.epf).Cast<FamilySymbol>().FirstOrDefault();
+            // Create a new instance of an adaptive component family
+            FamilyInstance instance = AdaptiveComponentInstanceUtils.CreateAdaptiveComponentInstance(PCFImport.doc, markerSymbol);
+            // Get the placement points of this instance
+            IList<ElementId> placePointIds = new List<ElementId>();
+            placePointIds = AdaptiveComponentInstanceUtils.GetInstancePlacementPointElementRefIds(instance);
+            // Set the position of each placement point
+            ReferencePoint point1 = PCFImport.doc.GetElement(placePointIds[0]) as ReferencePoint;
+            point1.Position = p1;
+            ReferencePoint point2 = PCFImport.doc.GetElement(placePointIds[1]) as ReferencePoint;
+            point2.Position = p2;
+
+            return instance;
+        }
+    }
 }

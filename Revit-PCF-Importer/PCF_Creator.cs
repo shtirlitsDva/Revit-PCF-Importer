@@ -202,7 +202,26 @@ namespace Revit_PCF_Importer
                 XYZ vA = familyConnector1.Origin - elementSymbol.CentrePoint.Xyz; //To define a vector: v = p2 - p1
                 XYZ vC = elementSymbol.EndPoint1.Xyz - elementSymbol.CentrePoint.Xyz;
 
+                XYZ vB = familyConnector2.Origin - elementSymbol.CentrePoint.Xyz; //To define a vector: v = p2 - p1
+                XYZ vD = elementSymbol.EndPoint2.Xyz - elementSymbol.CentrePoint.Xyz;
+
                 XYZ normRotAxis = vC.CrossProduct(vA).Normalize();
+
+                #region Fun with model lines
+
+                Filter filtermarker = new Filter("Marker: Marker", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until implements
+                FamilySymbol markerSymbol = new FilteredElementCollector(doc).WherePasses(filtermarker.epf).Cast<FamilySymbol>().FirstOrDefault();
+
+                XYZ A = vC.CrossProduct(vA);
+                XYZ B = vD.CrossProduct(vB);
+
+                Element marker = doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz.Add(A), markerSymbol, StructuralType.NonStructural);
+                Helper.PlaceAdaptiveMarkerLine("Red", elementSymbol.CentrePoint.Xyz, elementSymbol.CentrePoint.Xyz.Add(A));
+                Helper.PlaceAdaptiveMarkerLine("Green", elementSymbol.CentrePoint.Xyz, elementSymbol.CentrePoint.Xyz.Add(B));
+
+
+                #endregion
+
 
                 double dotProduct = vC.DotProduct(vA);
                 double rotAngle = System.Math.Acos(dotProduct);
@@ -213,6 +232,7 @@ namespace Revit_PCF_Importer
                 XYZ testRotation = trf.OfVector(vA).Normalize();
 
                 if ((vC.DotProduct(testRotation) > 0.00001) == false) rotAngle = -rotAngle;
+
 
                 //elbow.Location.Rotate(rotLine, rotAngle);
 
