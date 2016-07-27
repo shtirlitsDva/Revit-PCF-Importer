@@ -184,61 +184,62 @@ namespace Revit_PCF_Importer
 
                 #region Create by Directly Placing families
 
-                Element element = doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, (FamilySymbol)elbowSymbol, StructuralType.NonStructural);
+                //Element element = doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, (FamilySymbol)elbowSymbol, StructuralType.NonStructural);
 
-                FamilyInstance elbow = (FamilyInstance)element;
+                //FamilyInstance elbow = (FamilyInstance)element;
 
-                double diameter = elementSymbol.EndPoint1.Diameter;
+                //double diameter = elementSymbol.EndPoint1.Diameter;
 
-                elbow.LookupParameter("Nominal Diameter").Set(diameter); //Implement a procedure to select the parameter by name supplied by user
+                //elbow.LookupParameter("Nominal Diameter").Set(diameter); //Implement a procedure to select the parameter by name supplied by user
 
-                //Begin geometric analysis to rotate the endpoints to actual locations
-                //Get connectors from the placed family
-                ConnectorSet cs = ((FamilyInstance)element).MEPModel.ConnectorManager.Connectors;
+                ////Begin geometric analysis to rotate the endpoints to actual locations
+                ////Get connectors from the placed family
+                //ConnectorSet cs = ((FamilyInstance)element).MEPModel.ConnectorManager.Connectors;
 
-                Connector familyConnector1 = (from Connector c in cs where true select c).First();
-                Connector familyConnector2 = (from Connector c in cs where true select c).Last();
+                //Connector familyConnector1 = (from Connector c in cs where true select c).First();
+                //Connector familyConnector2 = (from Connector c in cs where true select c).Last();
 
-                XYZ vA = familyConnector1.Origin - elementSymbol.CentrePoint.Xyz; //To define a vector: v = p2 - p1
-                XYZ vC = elementSymbol.EndPoint1.Xyz - elementSymbol.CentrePoint.Xyz;
+                //XYZ vA = familyConnector1.Origin - elementSymbol.CentrePoint.Xyz; //To define a vector: v = p2 - p1
+                //XYZ vC = elementSymbol.EndPoint1.Xyz - elementSymbol.CentrePoint.Xyz;
 
-                XYZ vB = familyConnector2.Origin - elementSymbol.CentrePoint.Xyz; //To define a vector: v = p2 - p1
-                XYZ vD = elementSymbol.EndPoint2.Xyz - elementSymbol.CentrePoint.Xyz;
+                //XYZ vB = familyConnector2.Origin - elementSymbol.CentrePoint.Xyz; //To define a vector: v = p2 - p1
+                //XYZ vD = elementSymbol.EndPoint2.Xyz - elementSymbol.CentrePoint.Xyz;
 
-                XYZ normRotAxis = vC.CrossProduct(vA).Normalize();
+                //XYZ normRotAxis = vC.CrossProduct(vA).Normalize();
 
-                #region Fun with model lines
+                //#region Fun with model lines
 
-                Filter filtermarker = new Filter("Marker: Marker", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until implements
-                FamilySymbol markerSymbol = new FilteredElementCollector(doc).WherePasses(filtermarker.epf).Cast<FamilySymbol>().FirstOrDefault();
+                //Filter filtermarker = new Filter("Marker: Marker", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until implements
+                //FamilySymbol markerSymbol = new FilteredElementCollector(doc).WherePasses(filtermarker.epf).Cast<FamilySymbol>().FirstOrDefault();
 
-                XYZ A = vC.CrossProduct(vA);
-                XYZ B = vD.CrossProduct(vB);
+                //XYZ A = vC.CrossProduct(vA);
+                //XYZ B = vD.CrossProduct(vB);
 
-                Element marker = doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz.Add(A), markerSymbol, StructuralType.NonStructural);
-                Helper.PlaceAdaptiveMarkerLine("Red", elementSymbol.CentrePoint.Xyz, elementSymbol.CentrePoint.Xyz.Add(A));
-                Helper.PlaceAdaptiveMarkerLine("Green", elementSymbol.CentrePoint.Xyz, elementSymbol.CentrePoint.Xyz.Add(B));
-
-
-                #endregion
+                //Element marker = doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz.Add(A), markerSymbol, StructuralType.NonStructural);
+                ////Helper.PlaceAdaptiveMarkerLine("Red", elementSymbol.CentrePoint.Xyz, elementSymbol.CentrePoint.Xyz.Add(A));
+                ////Helper.PlaceAdaptiveMarkerLine("Green", elementSymbol.CentrePoint.Xyz, elementSymbol.CentrePoint.Xyz.Add(B));
 
 
-                double dotProduct = vC.DotProduct(vA);
-                double rotAngle = System.Math.Acos(dotProduct);
-                var rotLine = Line.CreateUnbound(elementSymbol.CentrePoint.Xyz, normRotAxis);
+                //#endregion
+                //Line rotLine = Line.CreateBound(elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint1.Xyz);
+                //double rotAngle = Math.PI;
 
-                //Test rotation
-                Transform trf = Transform.CreateRotationAtPoint(normRotAxis, rotAngle, elementSymbol.CentrePoint.Xyz);
-                XYZ testRotation = trf.OfVector(vA).Normalize();
+                ////double dotProduct = vC.DotProduct(vA);
+                ////double rotAngle = System.Math.Acos(dotProduct);
+                ////var rotLine = Line.CreateUnbound(elementSymbol.CentrePoint.Xyz, normRotAxis);
 
-                if ((vC.DotProduct(testRotation) > 0.00001) == false) rotAngle = -rotAngle;
+                //////Test rotation
+                ////Transform trf = Transform.CreateRotationAtPoint(normRotAxis, rotAngle, elementSymbol.CentrePoint.Xyz);
+                ////XYZ testRotation = trf.OfVector(vA).Normalize();
+
+                ////if ((vC.DotProduct(testRotation) > 0.00001) == false) rotAngle = -rotAngle;
 
 
                 //elbow.Location.Rotate(rotLine, rotAngle);
 
-                //Store the reference of the created element in the symbol object.
-                elementSymbol.CreatedElement = element;
-                ;
+                ////Store the reference of the created element in the symbol object.
+                //elementSymbol.CreatedElement = element;
+                //;
 
                 #endregion
             }

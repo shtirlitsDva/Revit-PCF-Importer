@@ -795,6 +795,13 @@ namespace PCF_Functions
 
     public class Helper
     {
+        /// <summary>
+        /// This method is used to place an adaptive family which helps in debugging
+        /// </summary>
+        /// <param name="typeName"></param>
+        /// <param name="p1"></param>
+        /// <param name="p2"></param>
+        /// <returns></returns>
         public static FamilyInstance PlaceAdaptiveMarkerLine(string typeName, XYZ p1, XYZ p2)
         {
             //Get the symbol
