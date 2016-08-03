@@ -20,6 +20,7 @@ namespace PCF_Functions
     public class InputVars
     {
         #region Execution
+
         //Used for "global variables".
         //File I/O
         public static string OutputDirectoryFilePath;
@@ -46,54 +47,64 @@ namespace PCF_Functions
         public static bool UNITS_WEIGHT_LENGTH_METER = true;
         //public static bool UNITS_WEIGHT_LENGTH_INCH = false; OBSOLETE
         public static bool UNITS_WEIGHT_LENGTH_FEET = false;
+
         #endregion Execution
 
         #region Filters
+
         //Filters
         public static string SysAbbr = "FVF";
         public static BuiltInParameter SysAbbrParam = BuiltInParameter.RBS_DUCT_PIPE_SYSTEM_ABBREVIATION_PARAM;
         public static string PipelineGroupParameterName = "System Abbreviation";
+
         #endregion Filters
 
         #region Element parameter definition
+
         //Shared parameter group
         //public const string PCF_GROUP_NAME = "PCF"; OBSOLETE
         public const BuiltInParameterGroup PCF_BUILTIN_GROUP_NAME = BuiltInParameterGroup.PG_ANALYTICAL_MODEL;
 
         //PCF specification - OBSOLETE
         //public static string PIPING_SPEC = "STD";
+
         #endregion
     }
 
     public class Composer
     {
         #region Preamble
+
         //PCF Preamble composition
         readonly StringBuilder sbPreamble = new StringBuilder();
+
         public StringBuilder PreambleComposer()
         {
             sbPreamble.Append("ISOGEN-FILES ISOGEN.FLS");
             sbPreamble.AppendLine();
-            sbPreamble.Append("UNITS-BORE "+InputVars.UNITS_BORE);
+            sbPreamble.Append("UNITS-BORE " + InputVars.UNITS_BORE);
             sbPreamble.AppendLine();
-            sbPreamble.Append("UNITS-CO-ORDS "+InputVars.UNITS_CO_ORDS);
+            sbPreamble.Append("UNITS-CO-ORDS " + InputVars.UNITS_CO_ORDS);
             sbPreamble.AppendLine();
-            sbPreamble.Append("UNITS-WEIGHT "+InputVars.UNITS_WEIGHT);
+            sbPreamble.Append("UNITS-WEIGHT " + InputVars.UNITS_WEIGHT);
             sbPreamble.AppendLine();
             sbPreamble.Append("UNITS-BOLT-DIA MM");
             sbPreamble.AppendLine();
             sbPreamble.Append("UNITS-BOLT-LENGTH MM");
             sbPreamble.AppendLine();
-            sbPreamble.Append("UNITS-WEIGHT-LENGTH "+InputVars.UNITS_WEIGHT_LENGTH);
+            sbPreamble.Append("UNITS-WEIGHT-LENGTH " + InputVars.UNITS_WEIGHT_LENGTH);
             sbPreamble.AppendLine();
             return sbPreamble;
         }
+
         #endregion
 
         #region Materials section
+
         StringBuilder sbMaterials = new StringBuilder();
         IEnumerable<IGrouping<string, Element>> materialGroups = null;
         int groupNumber;
+
         public StringBuilder MaterialsSection(IEnumerable<IGrouping<string, Element>> elementGroups)
         {
             materialGroups = elementGroups;
@@ -104,13 +115,15 @@ namespace PCF_Functions
                 sbMaterials.AppendLine();
                 sbMaterials.Append("MATERIAL-IDENTIFIER " + groupNumber);
                 sbMaterials.AppendLine();
-                sbMaterials.Append("    DESCRIPTION "+group.Key);
+                sbMaterials.Append("    DESCRIPTION " + group.Key);
             }
             return sbMaterials;
         }
+
         #endregion
 
         #region CII export writer
+
         StringBuilder sbCII;
         private Document doc;
         private string key;
@@ -150,6 +163,7 @@ namespace PCF_Functions
         #endregion
 
         #region ELEM parameter writer
+
         private StringBuilder sbElemParameters;
         private Element element;
 
@@ -184,18 +198,22 @@ namespace PCF_Functions
             }
             return sbElemParameters;
         }
+
         #endregion
     }
 
     public class Filter
     {
-        BuiltInParameter testParam; ParameterValueProvider pvp; FilterStringRuleEvaluator str;
-        FilterStringRule paramFr; public ElementParameterFilter epf;
+        BuiltInParameter testParam;
+        ParameterValueProvider pvp;
+        FilterStringRuleEvaluator str;
+        FilterStringRule paramFr;
+        public ElementParameterFilter epf;
 
         public Filter(string valueQualifier, BuiltInParameter parameterName)
         {
             testParam = parameterName;
-            pvp = new ParameterValueProvider(new ElementId((int)testParam));
+            pvp = new ParameterValueProvider(new ElementId((int) testParam));
             str = new FilterStringContains();
             paramFr = new FilterStringRule(pvp, str, valueQualifier, false);
             epf = new ElementParameterFilter(paramFr);
@@ -207,6 +225,7 @@ namespace PCF_Functions
         private Element element;
         private bool diameterLimitBool;
         private double diameterLimit;
+
         /// <summary>
         /// Tests the diameter of the pipe or primary connector of element against the diameter limit set in the interface.
         /// </summary>
@@ -220,18 +239,20 @@ namespace PCF_Functions
             double testedDiameter = 0;
             switch (element.Category.Id.IntegerValue)
             {
-                case (int)BuiltInCategory.OST_PipeCurves:
-                    if (iv.UNITS_BORE_MM) testedDiameter = double.Parse(Conversion.PipeSizeToMm(((MEPCurve) element).Diameter/2));
-                    else if (iv.UNITS_BORE_INCH) testedDiameter = double.Parse(Conversion.PipeSizeToInch(((MEPCurve) element).Diameter/2));
+                case (int) BuiltInCategory.OST_PipeCurves:
+                    if (iv.UNITS_BORE_MM)
+                        testedDiameter = double.Parse(Conversion.PipeSizeToMm(((MEPCurve) element).Diameter/2));
+                    else if (iv.UNITS_BORE_INCH)
+                        testedDiameter = double.Parse(Conversion.PipeSizeToInch(((MEPCurve) element).Diameter/2));
 
                     if (testedDiameter <= diameterLimit) diameterLimitBool = false;
 
                     break;
 
-                case (int)BuiltInCategory.OST_PipeFitting:
-                case (int)BuiltInCategory.OST_PipeAccessory:
+                case (int) BuiltInCategory.OST_PipeFitting:
+                case (int) BuiltInCategory.OST_PipeAccessory:
                     //Cast the element passed to method to FamilyInstance
-                    FamilyInstance familyInstance = (FamilyInstance)element;
+                    FamilyInstance familyInstance = (FamilyInstance) element;
                     //MEPModel of the elements is accessed
                     MEPModel mepmodel = familyInstance.MEPModel;
                     //Get connector set for the element
@@ -240,13 +261,17 @@ namespace PCF_Functions
                     Connector testedConnector = null;
 
                     if (connectorSet.IsEmpty) break;
-                    if (connectorSet.Size == 1) foreach (Connector connector in connectorSet) testedConnector = connector;
-                    else testedConnector = (from Connector connector in connectorSet
+                    if (connectorSet.Size == 1)
+                        foreach (Connector connector in connectorSet) testedConnector = connector;
+                    else
+                        testedConnector = (from Connector connector in connectorSet
                             where connector.GetMEPConnectorInfo().IsPrimary
                             select connector).FirstOrDefault();
 
-                    if (iv.UNITS_BORE_MM) testedDiameter = double.Parse(Conversion.PipeSizeToMm(testedConnector.Radius));
-                    else if (iv.UNITS_BORE_INCH) testedDiameter = double.Parse(Conversion.PipeSizeToInch(testedConnector.Radius));
+                    if (iv.UNITS_BORE_MM)
+                        testedDiameter = double.Parse(Conversion.PipeSizeToMm(testedConnector.Radius));
+                    else if (iv.UNITS_BORE_INCH)
+                        testedDiameter = double.Parse(Conversion.PipeSizeToInch(testedConnector.Radius));
 
                     if (testedDiameter <= diameterLimit) diameterLimitBool = false;
 
@@ -259,7 +284,7 @@ namespace PCF_Functions
     public class Conversion
     {
         const double _inch_to_mm = 25.4;
-        const double _foot_to_mm = 12 * _inch_to_mm;
+        const double _foot_to_mm = 12*_inch_to_mm;
         const double _foot_to_inch = 12;
 
         /// <summary>
@@ -268,7 +293,7 @@ namespace PCF_Functions
         public static string RealString(double a)
         {
             //return a.ToString("0.##");
-            return (Math.Truncate(a * 100) / 100).ToString("0.00", CultureInfo.GetCultureInfo("en-GB"));
+            return (Math.Truncate(a*100)/100).ToString("0.00", CultureInfo.GetCultureInfo("en-GB"));
         }
 
         /// <summary>
@@ -277,22 +302,22 @@ namespace PCF_Functions
         public static string PointStringMm(XYZ p)
         {
             return string.Format("{0:0.00} {1:0.00} {2:0.00}",
-              RealString(p.X * _foot_to_mm),
-              RealString(p.Y * _foot_to_mm),
-              RealString(p.Z * _foot_to_mm));
+                RealString(p.X*_foot_to_mm),
+                RealString(p.Y*_foot_to_mm),
+                RealString(p.Z*_foot_to_mm));
         }
 
         public static string PointStringInch(XYZ p)
         {
             return string.Format("{0:0.00} {1:0.00} {2:0.00}",
-              RealString(p.X * _foot_to_inch),
-              RealString(p.Y * _foot_to_inch),
-              RealString(p.Z * _foot_to_inch));
+                RealString(p.X*_foot_to_inch),
+                RealString(p.Y*_foot_to_inch),
+                RealString(p.Z*_foot_to_inch));
         }
 
         public static string PipeSizeToMm(double l)
         {
-            return string.Format("{0}", Math.Round(l * 2 * _foot_to_mm));
+            return string.Format("{0}", Math.Round(l*2*_foot_to_mm));
         }
 
         public static string PipeSizeToInch(double l)
@@ -307,13 +332,13 @@ namespace PCF_Functions
 
         public static double RadianToDegree(double angle)
         {
-            return angle * (180.0 / Math.PI);
+            return angle*(180.0/Math.PI);
         }
     }
 
     public class EndWriter
     {
-        public static StringBuilder WriteEP1 (Element element, Connector connector)
+        public static StringBuilder WriteEP1(Element element, Connector connector)
         {
             StringBuilder sbEndWriter = new StringBuilder();
             XYZ connectorOrigin = connector.Origin;
@@ -396,7 +421,7 @@ namespace PCF_Functions
         public static StringBuilder WriteCP(FamilyInstance familyInstance)
         {
             StringBuilder sbEndWriter = new StringBuilder();
-            XYZ elementLocation = ((LocationPoint)familyInstance.Location).Point;
+            XYZ elementLocation = ((LocationPoint) familyInstance.Location).Point;
             sbEndWriter.Append("    CENTRE-POINT ");
             if (InputVars.UNITS_CO_ORDS_MM) sbEndWriter.Append(Conversion.PointStringMm(elementLocation));
             if (InputVars.UNITS_CO_ORDS_INCH) sbEndWriter.Append(Conversion.PointStringInch(elementLocation));
@@ -427,7 +452,7 @@ namespace PCF_Functions
         public static StringBuilder WriteCO(FamilyInstance familyInstance, Connector passedConnector)
         {
             StringBuilder sbEndWriter = new StringBuilder();
-            XYZ elementLocation = ((LocationPoint)familyInstance.Location).Point;
+            XYZ elementLocation = ((LocationPoint) familyInstance.Location).Point;
             sbEndWriter.Append("    CO-ORDS ");
             if (InputVars.UNITS_CO_ORDS_MM) sbEndWriter.Append(Conversion.PointStringMm(elementLocation));
             if (InputVars.UNITS_CO_ORDS_INCH) sbEndWriter.Append(Conversion.PointStringInch(elementLocation));
@@ -444,6 +469,7 @@ namespace PCF_Functions
     public class ScheduleCreator
     {
         private UIDocument _uiDoc;
+
         public Result CreateAllItemsSchedule(UIDocument uiDoc)
         {
             try
@@ -484,6 +510,7 @@ namespace PCF_Functions
                 t.Start();
 
                 #region Schedule ALL elements
+
                 ViewSchedule schedAll = ViewSchedule.CreateSchedule(doc, ElementId.InvalidElementId,
                     ElementId.InvalidElementId);
                 schedAll.Name = "PCF - ALL Elements";
@@ -501,22 +528,30 @@ namespace PCF_Functions
 
                 string curUsage = "U";
                 string curDomain = "ELEM";
-                var query = from p in new plst().ListParametersAll where p.Usage == curUsage && p.Domain == curDomain select p;
-                
+                var query = from p in new plst().ListParametersAll
+                    where p.Usage == curUsage && p.Domain == curDomain
+                    select p;
+
                 foreach (pdef pDef in query.ToList())
                 {
                     SharedParameterElement parameter = (from SharedParameterElement param in sharedParameters
-                        where param.GuidValue.CompareTo(pDef.Guid) == 0 select param).First();
-                    SchedulableField queryField = (from fld in schFields where fld.ParameterId.IntegerValue == parameter.Id.IntegerValue select fld).First();
+                        where param.GuidValue.CompareTo(pDef.Guid) == 0
+                        select param).First();
+                    SchedulableField queryField =
+                        (from fld in schFields
+                            where fld.ParameterId.IntegerValue == parameter.Id.IntegerValue
+                            select fld).First();
 
                     ScheduleField field = schedAll.Definition.AddField(queryField);
                     if (pDef.Name != "PCF_ELEM_TYPE") continue;
                     ScheduleFilter filter = new ScheduleFilter(field.FieldId, ScheduleFilterType.HasParameter);
                     schedAll.Definition.AddFilter(filter);
                 }
+
                 #endregion
 
                 #region Schedule FILTERED elements
+
                 ViewSchedule schedFilter = ViewSchedule.CreateSchedule(doc, ElementId.InvalidElementId,
                     ElementId.InvalidElementId);
                 schedFilter.Name = "PCF - Filtered Elements";
@@ -534,21 +569,28 @@ namespace PCF_Functions
 
                 foreach (pdef pDef in query.ToList())
                 {
-                    SharedParameterElement parameter = (from SharedParameterElement param in sharedParameters where param.GuidValue.CompareTo(pDef.Guid) == 0
-                                                        select param).First();
-                    SchedulableField queryField = (from fld in schFields where fld.ParameterId.IntegerValue == parameter.Id.IntegerValue select fld).First();
+                    SharedParameterElement parameter = (from SharedParameterElement param in sharedParameters
+                        where param.GuidValue.CompareTo(pDef.Guid) == 0
+                        select param).First();
+                    SchedulableField queryField =
+                        (from fld in schFields
+                            where fld.ParameterId.IntegerValue == parameter.Id.IntegerValue
+                            select fld).First();
 
                     ScheduleField field = schedFilter.Definition.AddField(queryField);
                     if (pDef.Name != "PCF_ELEM_TYPE") continue;
                     ScheduleFilter filter = new ScheduleFilter(field.FieldId, ScheduleFilterType.HasParameter);
                     schedFilter.Definition.AddFilter(filter);
-                    filter = new ScheduleFilter(field.FieldId, ScheduleFilterType.NotEqual,"");
+                    filter = new ScheduleFilter(field.FieldId, ScheduleFilterType.NotEqual, "");
                     schedFilter.Definition.AddFilter(filter);
                 }
+
                 #endregion
 
                 #region Schedule Pipelines
-                ViewSchedule schedPipeline = ViewSchedule.CreateSchedule(doc, new ElementId(BuiltInCategory.OST_PipingSystem), ElementId.InvalidElementId);
+
+                ViewSchedule schedPipeline = ViewSchedule.CreateSchedule(doc,
+                    new ElementId(BuiltInCategory.OST_PipingSystem), ElementId.InvalidElementId);
                 schedPipeline.Name = "PCF - Pipelines";
                 schedPipeline.Definition.IsItemized = false;
 
@@ -566,10 +608,15 @@ namespace PCF_Functions
                 foreach (pdef pDef in query.ToList())
                 {
                     SharedParameterElement parameter = (from SharedParameterElement param in sharedParameters
-                                                        where param.GuidValue.CompareTo(pDef.Guid) == 0 select param).First();
-                    SchedulableField queryField = (from fld in schFields where fld.ParameterId.IntegerValue == parameter.Id.IntegerValue select fld).First();
+                        where param.GuidValue.CompareTo(pDef.Guid) == 0
+                        select param).First();
+                    SchedulableField queryField =
+                        (from fld in schFields
+                            where fld.ParameterId.IntegerValue == parameter.Id.IntegerValue
+                            select fld).First();
                     schedPipeline.Definition.AddField(queryField);
                 }
+
                 #endregion
 
                 t.Commit();
@@ -628,14 +675,15 @@ namespace PCF_Functions
 
                     Filter filter = new Filter(curPipelineReference, BuiltInParameter.RBS_SYSTEM_ABBREVIATION_PARAM);
                     //Get the elements
-                    collector.OfClass(typeof(PipingSystemType)).WherePasses(filter.epf); //Just to try something fun, if not working -- dispose
+                    collector.OfClass(typeof (PipingSystemType)).WherePasses(filter.epf);
+                        //Just to try something fun, if not working -- dispose
                     //Select correct systemType
                     //PipingSystemType sQuery = (from PipingSystemType st in collector
                     //                           where string.Equals(st.Abbreviation, curPipelineReference)
                     //                           select st).FirstOrDefault();
-                    PipingSystemType sQuery = (PipingSystemType)collector.FirstElement();
+                    PipingSystemType sQuery = (PipingSystemType) collector.FirstElement();
 
-                    if(sQuery != null) CurElementSymbol.PipingSystemType = sQuery;
+                    if (sQuery != null) CurElementSymbol.PipingSystemType = sQuery;
 
                     //Add the extracted element to the collection
                     collection.Elements.Add(CurElementSymbol);
@@ -692,7 +740,7 @@ namespace PCF_Functions
             if (resultList.Count > 1)
             {
                 string[] strArray = new string[resultList.Count];
-                resultList.CopyTo(strArray,0);
+                resultList.CopyTo(strArray, 0);
                 restOfTheLine = string.Join(" ", strArray);
             }
 
@@ -754,7 +802,7 @@ namespace PCF_Functions
                 int curPosition = e.Position;
                 int defLength = e.DefinitionLengthInLines;
                 StringCollection collectedLines = new StringCollection();
-                
+
                 //Iterate over the lines, very important to make sure that the defLength is defined correctly
                 for (int i = 0; i <= defLength; i++)
                 {
@@ -772,11 +820,21 @@ namespace PCF_Functions
             double Y = double.Parse(endPointLine[1], CultureInfo.InvariantCulture);
             double Z = double.Parse(endPointLine[2], CultureInfo.InvariantCulture);
 
-            if (iv.UNITS_CO_ORDS_MM) { X = Util.MmToFoot(X); Y = Util.MmToFoot(Y); Z = Util.MmToFoot(Z); }
+            if (iv.UNITS_CO_ORDS_MM)
+            {
+                X = Util.MmToFoot(X);
+                Y = Util.MmToFoot(Y);
+                Z = Util.MmToFoot(Z);
+            }
 
-            if (iv.UNITS_CO_ORDS_INCH) { X = Util.InchToFoot(X); Y = Util.InchToFoot(Y); Z = Util.InchToFoot(Z); }
+            if (iv.UNITS_CO_ORDS_INCH)
+            {
+                X = Util.InchToFoot(X);
+                Y = Util.InchToFoot(Y);
+                Z = Util.InchToFoot(Z);
+            }
 
-            XYZ xyz = new XYZ(X,Y,Z);
+            XYZ xyz = new XYZ(X, Y, Z);
 
             return xyz;
         }
@@ -805,10 +863,15 @@ namespace PCF_Functions
         public static FamilyInstance PlaceAdaptiveMarkerLine(string typeName, XYZ p1, XYZ p2)
         {
             //Get the symbol
-            Filter filtermarker = new Filter("Marker Line: "+typeName, BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until implements
-            FamilySymbol markerSymbol = new FilteredElementCollector(PCFImport.doc).WherePasses(filtermarker.epf).Cast<FamilySymbol>().FirstOrDefault();
+            Filter filtermarker = new Filter("Marker Line: " + typeName,
+                BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until implements
+            FamilySymbol markerSymbol =
+                new FilteredElementCollector(PCFImport.doc).WherePasses(filtermarker.epf)
+                    .Cast<FamilySymbol>()
+                    .FirstOrDefault();
             // Create a new instance of an adaptive component family
-            FamilyInstance instance = AdaptiveComponentInstanceUtils.CreateAdaptiveComponentInstance(PCFImport.doc, markerSymbol);
+            FamilyInstance instance = AdaptiveComponentInstanceUtils.CreateAdaptiveComponentInstance(PCFImport.doc,
+                markerSymbol);
             // Get the placement points of this instance
             IList<ElementId> placePointIds = new List<ElementId>();
             placePointIds = AdaptiveComponentInstanceUtils.GetInstancePlacementPointElementRefIds(instance);
