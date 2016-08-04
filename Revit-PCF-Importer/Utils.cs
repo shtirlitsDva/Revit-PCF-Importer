@@ -26,7 +26,8 @@ namespace BuildingCoder
     class Util
     {
         #region Geometrical Comparison
-        const double _eps = 1.0e-9;
+        //const double _eps = 1.0e-9; //Original tolerance
+        const double _eps = 0.00328; //Tolerance equal to 1 mm
 
         public static double Eps
         {

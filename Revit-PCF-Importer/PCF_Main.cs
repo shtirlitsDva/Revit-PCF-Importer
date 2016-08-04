@@ -70,10 +70,22 @@ namespace Revit_PCF_Importer
                 tx.Start("Create elements");
                 PcfCreator = new PCF_Creator(new ProcessElements());
                 //This method creates elements
-                foreach (ElementSymbol es in ExtractedElementCollection.Elements)
-                {
-                    PcfCreator.SendElementsToCreation(es);
-                }
+                //First send pipes for creation, other elements after
+                //Filter for pipes
+                var pipeQuery = from ElementSymbol es in ExtractedElementCollection.Elements
+                    where string.Equals(es.ElementType, "PIPE")
+                    select es;
+                //Send pipes to creation
+                foreach (ElementSymbol es in pipeQuery) PcfCreator.SendElementsToCreation(es);
+                //Regenerate document
+                doc.Regenerate();
+                //Filter out pipes
+                var notPipeQuery = from ElementSymbol es in ExtractedElementCollection.Elements
+                    where !string.Equals(es.ElementType, "PIPE")
+                    select es;
+                //Send elements to creation
+                foreach (ElementSymbol es in notPipeQuery) PcfCreator.SendElementsToCreation(es);
+
                 tx.Commit();
             }
             ;
