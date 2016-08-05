@@ -35,7 +35,8 @@ namespace Revit_PCF_Importer
                 {"UNITS-WEIGHT-LENGTH", _keywordProcessor.ELEMENT_TYPE_NOT_IMPLEMENTED},
                 {"PIPELINE-REFERENCE", _keywordProcessor.PIPELINE_REFERENCE},
                 {"PIPE", _keywordProcessor.GENERAL},
-                {"ELBOW", _keywordProcessor.GENERAL}
+                {"ELBOW", _keywordProcessor.GENERAL},
+                {"TEE", _keywordProcessor.GENERAL }
             };
             return dictionary;
         }

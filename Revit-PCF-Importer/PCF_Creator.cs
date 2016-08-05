@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -73,15 +74,15 @@ namespace Revit_PCF_Importer
             try
             {
                 //Choose pipe type.Hardcoded value until a configuring process is devised.
-                FilteredElementCollector collector = new FilteredElementCollector(doc);
-                Filter filter = new Filter("EN 10253-2 - Elbow: 3D", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until implements
+                //FilteredElementCollector collector = new FilteredElementCollector(doc);
+                //Filter filter = new Filter("EN 10253-2 - Elbow: 3D", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until implements
                 //Applying a fast filter first (OfCategory) to reduce load on slow filter (WherePasses).
-                FamilySymbol elbowSymbol = collector.OfCategory(BuiltInCategory.OST_PipeFitting).WherePasses(filter.epf).Cast<FamilySymbol>().FirstOrDefault();
-                if (elbowSymbol == null)
-                {
-                    Util.ErrorMsg("Family and Type for ELBOW at position " + elementSymbol.Position + " was not found.");
-                    return Result.Failed;
-                }
+                //FamilySymbol elbowSymbol = collector.OfCategory(BuiltInCategory.OST_PipeFitting).WherePasses(filter.epf).Cast<FamilySymbol>().FirstOrDefault();
+                //if (elbowSymbol == null)
+                //{
+                //    Util.ErrorMsg("Family and Type for ELBOW at position " + elementSymbol.Position + " was not found.");
+                //    return Result.Failed;
+                //}
 
                 #region Placing by face reference
 
@@ -151,68 +152,29 @@ namespace Revit_PCF_Importer
                 #endregion
 
                 #region Create by NewElbowFitting
-                //Get a list of all pipes created in project
-                //Consider adding a filter to only work on pipes in the same pipeline
-                var query = (from ElementSymbol es in PCFImport.ExtractedElementCollection.Elements
-                             where string.Equals("PIPE", es.ElementType)
-                             select (MEPCurve)es.CreatedElement).ToList();
-                //Remove all null items from list
-                //query.RemoveAll(item => item == null);
-                
-                //Collect all pipe connectors present im project while filtering for end connector types
-                IList<Connector> allConnectors = query
-                    .Select(mepCurve => mepCurve.ConnectorManager.Connectors)
-                    .SelectMany(conSet => (from Connector c in conSet
-                                           where (int)c.ConnectorType == 1
-                                           select c)).ToList();
+                //Get all pipe connectors
+                IList<Connector> allPipeConnectors = CreatorHelper.GetAllPipeConnectors();
 
                 //Get the actual endpoints of the elbow
                 XYZ p1 = elementSymbol.EndPoint1.Xyz; XYZ p2 = elementSymbol.EndPoint2.Xyz;
                 //Determine the corresponding pipe connectors
-                var c1 = (from Connector c in allConnectors where Util.IsEqual(p1, c.Origin) select c).FirstOrDefault();
-                var c2 = (from Connector c in allConnectors where Util.IsEqual(p2, c.Origin) select c).FirstOrDefault();
+                var c1 = (from Connector c in allPipeConnectors where Util.IsEqual(p1, c.Origin) select c).FirstOrDefault();
+                var c2 = (from Connector c in allPipeConnectors where Util.IsEqual(p2, c.Origin) select c).FirstOrDefault();
                 
                 //Handle the missing connectors by creating dummy pipes
-                //Choose pipe type. Hardcoded value until a configuring process is devised.
-                ElementId pipeTypeId = new ElementId(3048519); //Hardcoded until configuring process is implemented
-
-                //Collect levels and select one level
-                FilteredElementCollector levelCollector = new FilteredElementCollector(doc);
-                ElementClassFilter levelFilter = new ElementClassFilter(typeof(Level));
-                ElementId levelId = levelCollector.WherePasses(levelFilter).FirstElementId();
-                //Prepare placeholder pipes.
+                
                 Pipe pipe1 = null; Pipe pipe2 = null;
 
                 if (c1 == null)
                 {
-                    //Create vector to define pipe
-                    XYZ pipeDir = p1 - elementSymbol.CentrePoint.Xyz;
-                    XYZ helperPoint1 = p1.Add(pipeDir.Multiply(2));
-                    //Create pipe
-                    pipe1 = Pipe.Create(doc, elementSymbol.PipingSystemType.Id, pipeTypeId, levelId,
-                        p1, helperPoint1);
-                    //Set pipe diameter
-                    Parameter parameter = pipe1.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
-                    parameter.Set(elementSymbol.EndPoint1.Diameter);
-                    c1 = (from Connector c in pipe1.ConnectorManager.Connectors
-                        where Util.IsEqual(p1, c.Origin)
-                          select c).FirstOrDefault();
+                    pipe1 = CreatorHelper.CreateDummyPipe(p1, elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint1, elementSymbol);
+                    c1 = CreatorHelper.MatchConnector(p1, pipe1);
                 }
 
                 if (c2 == null)
                 {
-                    //Create vector to define pipe
-                    XYZ pipeDir = p2 - elementSymbol.CentrePoint.Xyz;
-                    XYZ helperPoint2 = p2.Add(pipeDir.Multiply(2));
-                    //Create pipe
-                    pipe2 = Pipe.Create(doc, elementSymbol.PipingSystemType.Id, pipeTypeId, levelId,
-                        p2, helperPoint2);
-                    //Set pipe diameter
-                    Parameter parameter = pipe2.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
-                    parameter.Set(elementSymbol.EndPoint2.Diameter);
-                    c2 = (from Connector c in pipe2.ConnectorManager.Connectors
-                            where Util.IsEqual(p2, c.Origin)
-                          select c).FirstOrDefault();
+                    pipe2 = CreatorHelper.CreateDummyPipe(p2, elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint2, elementSymbol);
+                    c2 = CreatorHelper.MatchConnector(p2, pipe2);
                 }
 
                 if (c1 != null && c2 != null)
@@ -292,50 +254,90 @@ namespace Revit_PCF_Importer
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                throw new Exception(e.Message);
             }
-
-            return Result.Succeeded;
         }
 
         public Result TEE(ElementSymbol elementSymbol)
         {
             try
             {
-                //Choose pipe type.Hardcoded value until a configuring process is devised.
+                //Determine if the tee is reducing. Move this to PARSER?
+                if (!elementSymbol.Branch1Point.Diameter.Equals(elementSymbol.EndPoint1.Diameter)) elementSymbol.IsReducing = true;
                 
-                FilteredElementCollector collector = new FilteredElementCollector(doc);
+                #region ByPlacingFamilyInstance
+                //Filter filter;
+                //if (!elementSymbol.IsReducing) filter = new Filter("EN 10253-2 - Tee: Tee Type B", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
+                //else filter = new Filter("EN 10253-2 - Reducing Tee: Red Tee Type B", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
+                //FamilySymbol teeSymbol = collector.WherePasses(filter.epf).Cast<FamilySymbol>().FirstOrDefault();
 
-                //Determine if the tee is reducing
-                if (!elementSymbol.Branch1Point.Diameter.Equals(elementSymbol.EndPoint1.Diameter))
-                    elementSymbol.IsReducing = true;
-                Filter filter;
-                if (!elementSymbol.IsReducing) filter = new Filter("EN 10253-2 - Tee: Tee Type B", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
-                else filter = new Filter("EN 10253-2 - Reducing Tee: Red Tee Type B", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
-                FamilySymbol teeSymbol = collector.WherePasses(filter.epf).Cast<FamilySymbol>().FirstOrDefault();
+                //if (teeSymbol == null)
+                //{
+                //    Util.ErrorMsg("Family and Type for TEE at position " + elementSymbol.Position + " was not found.");
+                //    return Result.Failed;
+                //}
 
-                if (teeSymbol == null)
+                //Element element = doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, teeSymbol, StructuralType.NonStructural);
+
+                //FamilyInstance tee = (FamilyInstance)element;
+                
+                //double mainDiameter = elementSymbol.EndPoint1.Diameter;
+                //double branchDiameter = elementSymbol.Branch1Point.Diameter;
+
+                //tee.LookupParameter("Nominal Diameter 1").Set(mainDiameter); //Implement a procedure to select the parameter by name supplied by user
+                //if (elementSymbol.IsReducing) tee.LookupParameter("Nominal Diameter 3").Set(branchDiameter);
+                #endregion
+
+                //Get all pipe connectors
+                IList<Connector> allPipeConnectors = CreatorHelper.GetAllPipeConnectors();
+
+                //Get the actual endpoints of the elbow
+                XYZ p1 = elementSymbol.EndPoint1.Xyz; XYZ p2 = elementSymbol.EndPoint2.Xyz; XYZ p3 = elementSymbol.Branch1Point.Xyz;
+                //Determine the corresponding pipe connectors
+                var c1 = (from Connector c in allPipeConnectors where Util.IsEqual(p1, c.Origin) select c).FirstOrDefault();
+                var c2 = (from Connector c in allPipeConnectors where Util.IsEqual(p2, c.Origin) select c).FirstOrDefault();
+                var c3 = (from Connector c in allPipeConnectors where Util.IsEqual(p3, c.Origin) select c).FirstOrDefault();
+
+                //Handle the missing connectors by creating dummy pipes
+
+                Pipe pipe1 = null; Pipe pipe2 = null; Pipe pipe3 = null;
+
+                if (c1 == null)
                 {
-                    Util.ErrorMsg("Family and Type for TEE at position " + elementSymbol.Position + " was not found.");
-                    return Result.Failed;
+                    pipe1 = CreatorHelper.CreateDummyPipe(p1, elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint1, elementSymbol);
+                    c1 = CreatorHelper.MatchConnector(p1, pipe1);
                 }
 
-                Element element = doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, teeSymbol, StructuralType.NonStructural);
+                if (c2 == null)
+                {
+                    pipe2 = CreatorHelper.CreateDummyPipe(p2, elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint2, elementSymbol);
+                    c2 = CreatorHelper.MatchConnector(p2, pipe2);
+                }
 
-                FamilyInstance tee = (FamilyInstance)element;
+                if (c3 == null)
+                {
+                    pipe3 = CreatorHelper.CreateDummyPipe(p3, elementSymbol.CentrePoint.Xyz, elementSymbol.Branch1Point, elementSymbol);
+                    c3 = CreatorHelper.MatchConnector(p3, pipe3);
+                }
 
-                double mainDiameter = elementSymbol.EndPoint1.Diameter;
-                double branchDiameter = elementSymbol.Branch1Point.Diameter;
-
-                tee.LookupParameter("Nominal Diameter 1").Set(mainDiameter); //Implement a procedure to select the parameter by name supplied by user
-                if (elementSymbol.IsReducing) tee.LookupParameter("Nominal Diameter 3").Set(branchDiameter);
+                if (c1 != null && c2 != null && c3 != null)
+                {
+                    Element element = doc.Create.NewTeeFitting(c1, c2, c3);
+                    if (pipe1 != null) doc.Delete(pipe1.Id);
+                    if (pipe2 != null) doc.Delete(pipe2.Id);
+                    if (pipe3 != null) doc.Delete(pipe3.Id);
+                    elementSymbol.CreatedElement = element;
+                    doc.Regenerate();
+                    return Result.Succeeded;
+                }
+                //If this point is reached, something has failed
+                return Result.Failed;
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                throw new Exception(e.Message);
             }
-
-
-            return Result.Succeeded;
         }
     }
 }

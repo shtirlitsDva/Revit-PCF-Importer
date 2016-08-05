@@ -2,11 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Electrical;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.UI;
 using BuildingCoder;
@@ -848,6 +850,143 @@ namespace PCF_Functions
             if (iv.UNITS_BORE_INCH) diameter = Util.InchToFoot(diameter);
 
             return diameter;
+        }
+    }
+
+    public class CreatorHelper
+    {
+        public static FilteredElementCollector GetElementsWithConnectors(Document doc)
+        {
+            // what categories of family instances
+            // are we interested in?
+            // From here: http://thebuildingcoder.typepad.com/blog/2010/06/retrieve-mep-elements-and-connectors.html
+
+            BuiltInCategory[] bics = new BuiltInCategory[]
+            {
+                //BuiltInCategory.OST_CableTray,
+                //BuiltInCategory.OST_CableTrayFitting,
+                //BuiltInCategory.OST_Conduit,
+                //BuiltInCategory.OST_ConduitFitting,
+                //BuiltInCategory.OST_DuctCurves,
+                //BuiltInCategory.OST_DuctFitting,
+                //BuiltInCategory.OST_DuctTerminal,
+                //BuiltInCategory.OST_ElectricalEquipment,
+                //BuiltInCategory.OST_ElectricalFixtures,
+                //BuiltInCategory.OST_LightingDevices,
+                //BuiltInCategory.OST_LightingFixtures,
+                //BuiltInCategory.OST_MechanicalEquipment,
+                BuiltInCategory.OST_PipeAccessory,
+                BuiltInCategory.OST_PipeCurves,
+                BuiltInCategory.OST_PipeFitting,
+                //BuiltInCategory.OST_PlumbingFixtures,
+                //BuiltInCategory.OST_SpecialityEquipment,
+                //BuiltInCategory.OST_Sprinklers,
+                //BuiltInCategory.OST_Wire
+            };
+
+            IList<ElementFilter> a = new List<ElementFilter>(bics.Count());
+
+            foreach (BuiltInCategory bic in bics) a.Add(new ElementCategoryFilter(bic));
+
+            LogicalOrFilter categoryFilter = new LogicalOrFilter(a);
+
+            LogicalAndFilter familyInstanceFilter = new LogicalAndFilter(categoryFilter, new ElementClassFilter(typeof(FamilyInstance)));
+
+            //IList<ElementFilter> b = new List<ElementFilter>(6);
+            IList<ElementFilter> b = new List<ElementFilter>();
+
+            //b.Add(new ElementClassFilter(typeof(CableTray)));
+            //b.Add(new ElementClassFilter(typeof(Conduit)));
+            //b.Add(new ElementClassFilter(typeof(Duct)));
+            b.Add(new ElementClassFilter(typeof(Pipe)));
+
+            b.Add(familyInstanceFilter);
+
+            LogicalOrFilter classFilter = new LogicalOrFilter(b);
+
+            FilteredElementCollector collector = new FilteredElementCollector(doc);
+
+            collector.WherePasses(classFilter);
+
+            return collector;
+        }
+
+        public static ConnectorSet GetConnectors(Element e)
+        {
+            ConnectorSet connectors = null;
+
+            if (e is FamilyInstance)
+            {
+                MEPModel m = ((FamilyInstance)e).MEPModel;
+                if (null != m && null != m.ConnectorManager) connectors = m.ConnectorManager.Connectors;
+            }
+
+            else if (e is Wire) connectors = ((Wire)e).ConnectorManager.Connectors;
+
+            else
+            {
+                Debug.Assert(e.GetType().IsSubclassOf(typeof(MEPCurve)), 
+                  "expected all candidate connector provider "
+                  + "elements to be either family instances or "
+                  + "derived from MEPCurve");
+
+                if (e is MEPCurve) connectors = ((MEPCurve)e).ConnectorManager.Connectors;
+            }
+            return connectors;
+        }
+
+        public static IList<Connector> GetAllPipeConnectors()
+        {
+            //Get a list of all pipes created in project
+            //Consider adding a filter to only work on pipes in the same pipeline
+            List<MEPCurve> query = (from ElementSymbol es in PCFImport.ExtractedElementCollection.Elements
+                                    where string.Equals("PIPE", es.ElementType)
+                                    select (MEPCurve)es.CreatedElement).ToList();
+            //Remove all null items from list
+            //query.RemoveAll(item => item == null);
+
+            //Collect all pipe connectors present im project while filtering for end connector types
+            IList<Connector> allPipeConnectors = query
+                .Select(mepCurve => mepCurve.ConnectorManager.Connectors)
+                .SelectMany(conSet => (from Connector c in conSet
+                                       where (int)c.ConnectorType == 1
+                                       select c)).ToList();
+            return allPipeConnectors;
+        }
+
+        public static Pipe CreateDummyPipe(XYZ pointToConnect, XYZ directionPoint, PointInSpace endInstance, ElementSymbol elementSymbol)
+        {
+            Pipe pipe = null;
+
+            //Choose pipe type. Hardcoded value until a configuring process is devised.
+            ElementId pipeTypeId = new ElementId(3048519); //Hardcoded until configuring process is implemented
+
+            //Collect levels and select one level
+            FilteredElementCollector levelCollector = new FilteredElementCollector(PCFImport.doc);
+            ElementClassFilter levelFilter = new ElementClassFilter(typeof(Level));
+            ElementId levelId = levelCollector.WherePasses(levelFilter).FirstElementId();
+            
+            //Create vector to define pipe
+            XYZ pipeDir = pointToConnect - directionPoint;
+            XYZ helperPoint1 = pointToConnect.Add(pipeDir.Multiply(2));
+            //Create pipe
+            pipe = Pipe.Create(PCFImport.doc, elementSymbol.PipingSystemType.Id, pipeTypeId, levelId,
+                pointToConnect, helperPoint1);
+            //Set pipe diameter
+            Parameter parameter = pipe.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
+            parameter.Set(endInstance.Diameter);
+
+            return pipe;
+        }
+
+        public static Connector MatchConnector(XYZ pointToMatch, Pipe pipe)
+        {
+            Connector connector = null;
+            connector = (from Connector c in pipe.ConnectorManager.Connectors
+                  where Util.IsEqual(pointToMatch, c.Origin)
+                  select c).FirstOrDefault();
+
+            return connector;
         }
     }
 
