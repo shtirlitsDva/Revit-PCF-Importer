@@ -101,6 +101,26 @@ namespace Revit_PCF_Importer
 
                 tx.Commit();
             }
+
+            using (Transaction tx = new Transaction(doc))
+            {
+                tx.Start("Delete dummy elements");
+                IEnumerable<Element> query = from ElementSymbol es in ExtractedElementCollection.Elements
+                    where es.DummyToDelete != null
+                    select es.DummyToDelete;
+                try
+                {
+                    foreach (Element e in query)
+                    {
+                        //doc.Delete(e.Id);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+                tx.Commit();
+            }
             ;
 
             //Test

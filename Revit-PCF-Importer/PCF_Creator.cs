@@ -420,10 +420,10 @@ namespace Revit_PCF_Importer
                 }
 
                 //Place the instance
-                Element element = doc.Create.NewFamilyInstance(placementLocation, capSymbol,
+                Element cap = doc.Create.NewFamilyInstance(placementLocation, capSymbol,
                     StructuralType.NonStructural);
 
-                ConnectorSet conSet = CreatorHelper.GetConnectorSet(element);
+                ConnectorSet conSet = CreatorHelper.GetConnectorSet(cap);
                 //The CAP should only have one connector
                 Connector c1 = (from Connector c in conSet where true select c).FirstOrDefault();
 
@@ -433,7 +433,7 @@ namespace Revit_PCF_Importer
                 IList<Connector> allPipeConnectors = CreatorHelper.GetAllPipeConnectors();
 
                 //Determine the corresponding pipe connectors
-                var c2 = (from Connector c in allPipeConnectors where Util.IsEqual(placementLocation, c.Origin) select c)
+                Connector c2 = (from Connector c in allPipeConnectors where Util.IsEqual(placementLocation, c.Origin) select c)
                         .FirstOrDefault();
 
                 ////Find the other connector (again...)
@@ -445,17 +445,39 @@ namespace Revit_PCF_Importer
                 //    where Util.IsEqual(c1.Origin, c.Origin) //Compare the connector from the cap to each connector in the document
                 //    select c).FirstOrDefault(); //Break on first match
 
+                //Create a dummy pipe to attach the cap to
                 if (c2 == null)
                 {
                     pipe1 = CreatorHelper.CreateDummyPipe(placementLocation, otherLocation,
                         placementEnd, elementSymbol);
                     c2 = CreatorHelper.MatchConnector(placementLocation, pipe1);
                 }
-                
-                c2.ConnectTo(c1);
-                elementSymbol.CreatedElement = element;
+
+                #region Geometric manipulation
+                //http://thebuildingcoder.typepad.com/blog/2012/05/create-a-pipe-cap.html
+                Connector capConnector = c1;
+                Connector start = c2;
+                MEPCurve hostPipe = start.Owner as MEPCurve;
+                Connector end = (from Connector c in hostPipe.ConnectorManager.Connectors
+                                 where (int)c.ConnectorType == 1 && c.Id != start.Id
+                                 select c).FirstOrDefault();
+                XYZ dir = start.Origin - end.Origin;
+                dir.Normalize();
+                XYZ pipeHorizontalDirection = new XYZ(dir.X, dir.Y, 0.0).Normalize();
+                XYZ connectorDirection = -capConnector.CoordinateSystem.BasisZ;
+                double zRotationAngle = pipeHorizontalDirection.AngleTo(connectorDirection);
+                Transform trf = Transform.CreateRotationAtPoint(XYZ.BasisZ, zRotationAngle, start.Origin);
+                XYZ testRotation = trf.OfVector(connectorDirection).Normalize();
+                if (Math.Abs(testRotation.DotProduct(pipeHorizontalDirection) - 1) > 0.00001) zRotationAngle = -zRotationAngle;
+                Line axis = Line.CreateUnbound(start.Origin, start.Origin + XYZ.BasisZ);
+                cap.Location.Rotate(axis, zRotationAngle);
+                #endregion
                 doc.Regenerate();
-                if (pipe1 != null) doc.Delete(pipe1.Id);
+                c2.ConnectTo(c1);
+                elementSymbol.CreatedElement = cap;
+                doc.Regenerate();
+                elementSymbol.DummyToDelete = pipe1;
+                //if (pipe1 != null) doc.Delete(pipe1.Id);
                 return Result.Succeeded;
 
             }

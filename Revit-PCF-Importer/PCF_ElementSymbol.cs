@@ -28,7 +28,8 @@ namespace Revit_PCF_Importer
         public double Angle { get; set; } = -999;
         //public Guid guid { get; set; } = null;
         public string UCI { get; set; } = string.Empty;
-        public Element CreatedElement { get; set; } = null;
+        public Element CreatedElement { get; set; } = null; //Holds the element that was created based on the information stored in the object
+        public Element DummyToDelete { get; set; } = null; //Holds any dummy element created which could not be deleted in the same transaction
         public bool IsReducing { get; set; } = false;
     }
     /// <summary>
