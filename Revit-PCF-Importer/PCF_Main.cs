@@ -79,12 +79,25 @@ namespace Revit_PCF_Importer
                 foreach (ElementSymbol es in pipeQuery) PcfCreator.SendElementsToCreation(es);
                 //Regenerate document
                 doc.Regenerate();
-                //Filter out pipes
-                var notPipeQuery = from ElementSymbol es in ExtractedElementCollection.Elements
-                    where !string.Equals(es.ElementType, "PIPE")
-                    select es;
+                //The rest of the elements are sent in waves, because fx. I determined, that CAPs must be sent later
+                //It depends on if the element can be created as standalone or it would need other elements to be present
+                //CAPS must be sent later
+                var firstWaveElementsQuery = from ElementSymbol es in ExtractedElementCollection.Elements
+                                             where 
+                                             !( //Take care! ! operator has lower precedence than ||
+                                             string.Equals(es.ElementType, "PIPE") || 
+                                             string.Equals(es.ElementType, "CAP")
+                                             )
+                                             select es;
                 //Send elements to creation
-                foreach (ElementSymbol es in notPipeQuery) PcfCreator.SendElementsToCreation(es);
+                foreach (ElementSymbol es in firstWaveElementsQuery) PcfCreator.SendElementsToCreation(es);
+
+                //Filter CAPs 
+                var capWaveElementsQuery = from ElementSymbol es in ExtractedElementCollection.Elements
+                                           where string.Equals(es.ElementType, "CAP")
+                                           select es;
+                //Send CAPs to creation
+                foreach (ElementSymbol es in capWaveElementsQuery) PcfCreator.SendElementsToCreation(es);
 
                 tx.Commit();
             }

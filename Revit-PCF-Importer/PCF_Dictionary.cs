@@ -36,7 +36,8 @@ namespace Revit_PCF_Importer
                 {"PIPELINE-REFERENCE", _keywordProcessor.PIPELINE_REFERENCE},
                 {"PIPE", _keywordProcessor.GENERAL},
                 {"ELBOW", _keywordProcessor.GENERAL},
-                {"TEE", _keywordProcessor.GENERAL }
+                {"TEE", _keywordProcessor.GENERAL},
+                {"CAP", _keywordProcessor.GENERAL}
             };
             return dictionary;
         }
@@ -105,7 +106,8 @@ namespace Revit_PCF_Importer
             {
                 {"PIPE", _processElements.PIPE },
                 {"ELBOW", _processElements.ELBOW },
-                {"TEE", _processElements.TEE }
+                {"TEE", _processElements.TEE},
+                {"CAP", _processElements.CAP}
             };
             return dictionary;
         }

@@ -911,7 +911,7 @@ namespace PCF_Functions
             return collector;
         }
 
-        public static ConnectorSet GetConnectors(Element e)
+        public static ConnectorSet GetConnectorSet(Element e)
         {
             ConnectorSet connectors = null;
 

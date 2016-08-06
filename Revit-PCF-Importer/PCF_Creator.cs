@@ -28,7 +28,8 @@ namespace Revit_PCF_Importer
         Result PIPE(ElementSymbol elementSymbol);
         Result ELBOW(ElementSymbol elementSymbol);
         Result TEE(ElementSymbol elementSymbol);
-}
+        Result CAP(ElementSymbol elementSymbol);
+    }
 
     public class ProcessElements : IProcessElements
     {
@@ -332,6 +333,131 @@ namespace Revit_PCF_Importer
                 }
                 //If this point is reached, something has failed
                 return Result.Failed;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw new Exception(e.Message);
+            }
+        }
+
+        public Result CAP(ElementSymbol elementSymbol)
+        {
+            try
+            {
+                FilteredElementCollector collector = new FilteredElementCollector(PCFImport.doc);
+                Filter filter;
+                filter = new Filter("EN 10253-2 - Cap: Standard", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
+                    //Hardcoded until selection is implemented
+                FamilySymbol capSymbol =
+                    collector.OfCategory(BuiltInCategory.OST_PipeFitting)
+                        .WherePasses(filter.epf)
+                        .Cast<FamilySymbol>()
+                        .FirstOrDefault();
+
+                if (capSymbol == null)
+                {
+                    Util.ErrorMsg("Family and Type for CAP at position " + elementSymbol.Position + " was not found.");
+                    return Result.Failed;
+                }
+
+                //The CAP has two end-points and no way to know which one of them to use to place the family
+                //Sooo... we match both end points to existing connectors in project to determine which one of them to use
+
+                FilteredElementCollector allElementsWithConnectors =
+                    CreatorHelper.GetElementsWithConnectors(PCFImport.doc);
+
+                XYZ firstMatch = null;
+                XYZ secondMatch = null;
+
+                firstMatch = (
+                    from elem in allElementsWithConnectors
+                    //Get all elements with connectors in document in a collector
+                    select CreatorHelper.GetConnectorSet(elem)
+                    //Retrieve the connector set of each element in collector
+                    into connectorSet //Pass it on
+                    from Connector c in connectorSet //Declare that we are looking at the connectors
+                    where Util.IsEqual(elementSymbol.EndPoint1.Xyz, c.Origin)
+                        //Compare the location from the symbol to each connector in the document
+                    select c.Origin).FirstOrDefault(); //Break on first match
+
+                secondMatch = (
+                    from elem in allElementsWithConnectors
+                    //Get all elements with connectors in document in a collector
+                    select CreatorHelper.GetConnectorSet(elem)
+                    //Retrieve the connector set of each element in collector
+                    into connectorSet //Pass it on
+                    from Connector c in connectorSet //Declare that we are looking at the connectors
+                    where Util.IsEqual(elementSymbol.EndPoint2.Xyz, c.Origin)
+                        //Compare the location from the symbol to each connector in the document
+                    select c.Origin).FirstOrDefault(); //Break on first match
+                //If no matching location is found -- fail the operation
+                if (firstMatch == null && secondMatch == null)
+                {
+                    Util.ErrorMsg("Placement location for CAP at position " + elementSymbol.Position +
+                                  " could not be determined.");
+                    return Result.Failed;
+                }
+                //Select the correct location for placement
+                XYZ placementLocation = null;
+                PointInSpace placementEnd = null;
+                XYZ otherLocation = null;
+                PointInSpace otherEnd = null;
+
+                if (firstMatch != null)
+                {
+                    placementLocation = firstMatch;
+                    placementEnd = elementSymbol.EndPoint1;
+                    otherLocation = elementSymbol.EndPoint2.Xyz;
+                    otherEnd = elementSymbol.EndPoint2;
+                }
+                else
+                {
+                    placementLocation = secondMatch;
+                    placementEnd = elementSymbol.EndPoint2;
+                    otherLocation = elementSymbol.EndPoint1.Xyz;
+                    otherEnd = elementSymbol.EndPoint1;
+                }
+
+                //Place the instance
+                Element element = doc.Create.NewFamilyInstance(placementLocation, capSymbol,
+                    StructuralType.NonStructural);
+
+                ConnectorSet conSet = CreatorHelper.GetConnectorSet(element);
+                //The CAP should only have one connector
+                Connector c1 = (from Connector c in conSet where true select c).FirstOrDefault();
+
+                Pipe pipe1 = null;
+
+                //Get all pipe connectors
+                IList<Connector> allPipeConnectors = CreatorHelper.GetAllPipeConnectors();
+
+                //Determine the corresponding pipe connectors
+                var c2 = (from Connector c in allPipeConnectors where Util.IsEqual(placementLocation, c.Origin) select c)
+                        .FirstOrDefault();
+
+                ////Find the other connector (again...)
+                //Connector c2 = (
+                //    from elem in allElementsWithConnectors //Get all elements with connectors in document in a collector
+                //    select CreatorHelper.GetConnectorSet(elem) //Retrieve the connector set of each element in collector
+                //    into connectorSet //Pass it on
+                //    from Connector c in connectorSet //Declare that we are looking at the connectors
+                //    where Util.IsEqual(c1.Origin, c.Origin) //Compare the connector from the cap to each connector in the document
+                //    select c).FirstOrDefault(); //Break on first match
+
+                if (c2 == null)
+                {
+                    pipe1 = CreatorHelper.CreateDummyPipe(placementLocation, otherLocation,
+                        placementEnd, elementSymbol);
+                    c2 = CreatorHelper.MatchConnector(placementLocation, pipe1);
+                }
+                
+                c2.ConnectTo(c1);
+                elementSymbol.CreatedElement = element;
+                doc.Regenerate();
+                if (pipe1 != null) doc.Delete(pipe1.Id);
+                return Result.Succeeded;
+
             }
             catch (Exception e)
             {
