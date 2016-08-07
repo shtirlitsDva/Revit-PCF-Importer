@@ -112,7 +112,7 @@ namespace Revit_PCF_Importer
                 {
                     foreach (Element e in query)
                     {
-                        //doc.Delete(e.Id);
+                        doc.Delete(e.Id);
                     }
                 }
                 catch (Exception e)

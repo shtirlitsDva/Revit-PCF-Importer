@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 using Autodesk.Revit.DB;
@@ -459,19 +460,30 @@ namespace Revit_PCF_Importer
                 Connector start = c2;
                 MEPCurve hostPipe = start.Owner as MEPCurve;
                 Connector end = (from Connector c in hostPipe.ConnectorManager.Connectors
-                                 where (int)c.ConnectorType == 1 && c.Id != start.Id
+                                 where (int)c.ConnectorType == 1 && c.Id != start.Id //Select the OTHER connector
                                  select c).FirstOrDefault();
                 XYZ dir = start.Origin - end.Origin;
                 dir.Normalize();
-                XYZ pipeHorizontalDirection = new XYZ(dir.X, dir.Y, 0.0).Normalize();
+                XYZ pipeHorizontalDirection = new XYZ(dir.X, dir.Y, 0.0); //.Normalize();
                 XYZ connectorDirection = -capConnector.CoordinateSystem.BasisZ;
                 double zRotationAngle = pipeHorizontalDirection.AngleTo(connectorDirection);
                 Transform trf = Transform.CreateRotationAtPoint(XYZ.BasisZ, zRotationAngle, start.Origin);
                 XYZ testRotation = trf.OfVector(connectorDirection).Normalize();
                 if (Math.Abs(testRotation.DotProduct(pipeHorizontalDirection) - 1) > 0.00001) zRotationAngle = -zRotationAngle;
-                Line axis = Line.CreateUnbound(start.Origin, start.Origin + XYZ.BasisZ);
+                Line axis = Line.CreateUnbound(start.Origin, end.Origin+XYZ.BasisZ);
                 cap.Location.Rotate(axis, zRotationAngle);
                 #endregion
+
+                #region Debug
+
+                var marker = Helper.PlaceAdaptiveMarkerLine("Green", start.Origin, end.Origin+XYZ.BasisZ);
+                Parameter parameter = marker.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS);
+                parameter.Set(Conversion.RadianToDegree(zRotationAngle).ToString());
+                
+
+                #endregion
+
+
                 doc.Regenerate();
                 c2.ConnectTo(c1);
                 elementSymbol.CreatedElement = cap;

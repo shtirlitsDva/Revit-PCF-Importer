@@ -336,6 +336,11 @@ namespace PCF_Functions
         {
             return angle*(180.0/Math.PI);
         }
+
+        public static double DegreeToRadian(double angle)
+        {
+            return Math.PI * angle / 180.0;
+        }
     }
 
     public class EndWriter
