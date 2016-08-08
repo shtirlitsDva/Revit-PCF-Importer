@@ -65,61 +65,71 @@ namespace Revit_PCF_Importer
                 PcfDict.ProcessTopLevelKeywords(elementSymbol);
             }
             ;
-            using (Transaction tx = new Transaction(doc))
+            using (TransactionGroup txGp = new TransactionGroup(doc))
             {
-                tx.Start("Create elements");
-                PcfCreator = new PCF_Creator(new ProcessElements());
-                //This method creates elements
-                //First send pipes for creation, other elements after
-                //Filter for pipes
-                var pipeQuery = from ElementSymbol es in ExtractedElementCollection.Elements
-                    where string.Equals(es.ElementType, "PIPE")
-                    select es;
-                //Send pipes to creation
-                foreach (ElementSymbol es in pipeQuery) PcfCreator.SendElementsToCreation(es);
-                //Regenerate document
-                doc.Regenerate();
-                //The rest of the elements are sent in waves, because fx. I determined, that CAPs must be sent later
-                //It depends on if the element can be created as standalone or it would need other elements to be present
-                //CAPS must be sent later
-                var firstWaveElementsQuery = from ElementSymbol es in ExtractedElementCollection.Elements
-                                             where 
-                                             !( //Take care! ! operator has lower precedence than ||
-                                             string.Equals(es.ElementType, "PIPE") || 
-                                             string.Equals(es.ElementType, "CAP")
-                                             )
-                                             select es;
-                //Send elements to creation
-                foreach (ElementSymbol es in firstWaveElementsQuery) PcfCreator.SendElementsToCreation(es);
+                txGp.Start("Create elements from PCF data");
 
-                //Filter CAPs 
-                var capWaveElementsQuery = from ElementSymbol es in ExtractedElementCollection.Elements
-                                           where string.Equals(es.ElementType, "CAP")
-                                           select es;
-                //Send CAPs to creation
-                foreach (ElementSymbol es in capWaveElementsQuery) PcfCreator.SendElementsToCreation(es);
-
-                tx.Commit();
-            }
-
-            using (Transaction tx = new Transaction(doc))
-            {
-                tx.Start("Delete dummy elements");
-                IEnumerable<Element> query = from ElementSymbol es in ExtractedElementCollection.Elements
-                    where es.DummyToDelete != null
-                    select es.DummyToDelete;
-                try
+                using (Transaction trans1 = new Transaction(doc))
                 {
-                    foreach (Element e in query)
+                    trans1.Start("Create elements");
+                    PcfCreator = new PCF_Creator(new ProcessElements());
+                    //This method creates elements
+                    //First send pipes for creation, other elements after
+                    //Filter for pipes
+                    var pipeQuery = from ElementSymbol es in ExtractedElementCollection.Elements
+                        where string.Equals(es.ElementType, "PIPE")
+                        select es;
+                    //Send pipes to creation
+                    foreach (ElementSymbol es in pipeQuery) PcfCreator.SendElementsToCreation(es);
+                    //Regenerate document
+                    doc.Regenerate();
+                    //The rest of the elements are sent in waves, because fx. I determined, that CAPs must be sent later
+                    //It depends on if the element can be created as standalone or it would need other elements to be present
+                    //CAPS must be sent later
+                    var firstWaveElementsQuery = from ElementSymbol es in ExtractedElementCollection.Elements
+                        where
+                            !( //Take care! ! operator has lower precedence than ||
+                                string.Equals(es.ElementType, "PIPE") ||
+                                string.Equals(es.ElementType, "CAP")
+                                )
+                        select es;
+                    //Send elements to creation
+                    foreach (ElementSymbol es in firstWaveElementsQuery) PcfCreator.SendElementsToCreation(es);
+                    trans1.Commit();
+                }
+                using (Transaction trans2 = new Transaction(doc))
+                {
+                    trans2.Start("Create caps");
+                    //Filter CAPs 
+                    var capWaveElementsQuery = from ElementSymbol es in ExtractedElementCollection.Elements
+                        where string.Equals(es.ElementType, "CAP")
+                        select es;
+                    //Send CAPs to creation
+                    foreach (ElementSymbol es in capWaveElementsQuery) PcfCreator.SendElementsToCreation(es);
+                    trans2.Commit();
+                }
+
+
+                using (Transaction tx = new Transaction(doc))
+                {
+                    tx.Start("Delete dummy elements");
+                    IEnumerable<Element> query = from ElementSymbol es in ExtractedElementCollection.Elements
+                        where es.DummyToDelete != null
+                        select es.DummyToDelete;
+                    try
                     {
-                        doc.Delete(e.Id);
+                        foreach (Element e in query)
+                        {
+                            doc.Delete(e.Id);
+                        }
                     }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
+                    tx.Commit();
                 }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
-                tx.Commit();
+                txGp.Assimilate();
             }
             ;
 

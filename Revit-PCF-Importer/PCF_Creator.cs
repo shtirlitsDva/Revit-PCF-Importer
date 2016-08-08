@@ -34,7 +34,7 @@ namespace Revit_PCF_Importer
 
     public class ProcessElements : IProcessElements
     {
-        private Document doc = PCFImport.doc;
+        //private PCFImport.document PCFImport.doc = PCFImport.doc;
         public Result ELEMENT_TYPE_NOT_IMPLEMENTED(ElementSymbol elementSymbol)
         {
             return Result.Succeeded;
@@ -48,12 +48,12 @@ namespace Revit_PCF_Importer
                 ElementId pipeTypeId = new ElementId(3048519); //Hardcoded until configuring process is implemented
 
                 //Collect levels and select one level
-                FilteredElementCollector collector = new FilteredElementCollector(doc);
+                FilteredElementCollector collector = new FilteredElementCollector(PCFImport.doc);
                 ElementClassFilter levelFilter = new ElementClassFilter(typeof(Level));
                 ElementId levelId = collector.WherePasses(levelFilter).FirstElementId();
 
                 //Create pipe
-                Pipe pipe = Pipe.Create(doc, elementSymbol.PipingSystemType.Id, pipeTypeId, levelId,
+                Pipe pipe = Pipe.Create(PCFImport.doc, elementSymbol.PipingSystemType.Id, pipeTypeId, levelId,
                     elementSymbol.EndPoint1.Xyz, elementSymbol.EndPoint2.Xyz);
                 //Set pipe diameter
                 Parameter parameter = pipe.get_Parameter(BuiltInParameter.RBS_PIPE_DIAMETER_PARAM);
@@ -76,7 +76,7 @@ namespace Revit_PCF_Importer
             try
             {
                 //Choose pipe type.Hardcoded value until a configuring process is devised.
-                //FilteredElementCollector collector = new FilteredElementCollector(doc);
+                //FilteredElementCollector collector = new FilteredElementCollector(PCFImport.doc);
                 //Filter filter = new Filter("EN 10253-2 - Elbow: 3D", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until implements
                 //Applying a fast filter first (OfCategory) to reduce load on slow filter (WherePasses).
                 //FamilySymbol elbowSymbol = collector.OfCategory(BuiltInCategory.OST_PipeFitting).WherePasses(filter.epf).Cast<FamilySymbol>().FirstOrDefault();
@@ -107,7 +107,7 @@ namespace Revit_PCF_Importer
                 //var solidShape = resultList[0] as Solid;
                 //Face face = solidShape.Faces.get_Item(0);
 
-                //DirectShape ds = DirectShape.CreateElement(doc, new ElementId(BuiltInCategory.OST_GenericModel));
+                //DirectShape ds = DirectShape.CreateElement(PCFImport.doc, new ElementId(BuiltInCategory.OST_GenericModel));
                 //ds.ApplicationId = "Application id";
                 //ds.ApplicationDataId = "Geometry object id";
                 //ds.Name = "Elbow " + elementSymbol.Position;
@@ -117,8 +117,8 @@ namespace Revit_PCF_Importer
                 //ds.SetShape(resultList);
                 //Options options = new Options();
                 //options.ComputeReferences = true;
-                //doc.Regenerate();
-                //FilteredElementCollector collectorDs = new FilteredElementCollector(doc);
+                //PCFImport.doc.Regenerate();
+                //FilteredElementCollector collectorDs = new FilteredElementCollector(PCFImport.doc);
                 //collectorDs.OfClass(typeof (DirectShape));
                 //var query = from Element e in collectorDs
                 //    where string.Equals(e.Name, "Elbow " + elementSymbol.Position)
@@ -148,7 +148,7 @@ namespace Revit_PCF_Importer
                 ////Finally place the elbow
                 ////Direction -- third parameter to the create method
                 //XYZ vC = elementSymbol.EndPoint1.Xyz - elementSymbol.CentrePoint.Xyz;
-                //Element element = doc.Create.NewFamilyInstance(faceRef, elementSymbol.CentrePoint.Xyz, vC,
+                //Element element = PCFImport.doc.Create.NewFamilyInstance(faceRef, elementSymbol.CentrePoint.Xyz, vC,
                 //    (FamilySymbol) elbowSymbol);
 
                 #endregion
@@ -181,11 +181,11 @@ namespace Revit_PCF_Importer
 
                 if (c1 != null && c2 != null)
                 {
-                    Element element = doc.Create.NewElbowFitting(c1, c2);
-                    if (pipe1 != null) doc.Delete(pipe1.Id);
-                    if (pipe2 != null) doc.Delete(pipe2.Id);
+                    Element element = PCFImport.doc.Create.NewElbowFitting(c1, c2);
+                    if (pipe1 != null) PCFImport.doc.Delete(pipe1.Id);
+                    if (pipe2 != null) PCFImport.doc.Delete(pipe2.Id);
                     elementSymbol.CreatedElement = element;
-                    doc.Regenerate();
+                    PCFImport.doc.Regenerate();
                     return Result.Succeeded;
                 }
                 //If this point is reached, something has failed
@@ -194,7 +194,7 @@ namespace Revit_PCF_Importer
 
                 #region Create by Directly Placing families
 
-                //Element element = doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, (FamilySymbol)elbowSymbol, StructuralType.NonStructural);
+                //Element element = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, (FamilySymbol)elbowSymbol, StructuralType.NonStructural);
 
                 //FamilyInstance elbow = (FamilyInstance)element;
 
@@ -220,12 +220,12 @@ namespace Revit_PCF_Importer
                 //#region Fun with model lines
 
                 //Filter filtermarker = new Filter("Marker: Marker", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until implements
-                //FamilySymbol markerSymbol = new FilteredElementCollector(doc).WherePasses(filtermarker.epf).Cast<FamilySymbol>().FirstOrDefault();
+                //FamilySymbol markerSymbol = new FilteredElementCollector(PCFImport.doc).WherePasses(filtermarker.epf).Cast<FamilySymbol>().FirstOrDefault();
 
                 //XYZ A = vC.CrossProduct(vA);
                 //XYZ B = vD.CrossProduct(vB);
 
-                //Element marker = doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz.Add(A), markerSymbol, StructuralType.NonStructural);
+                //Element marker = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz.Add(A), markerSymbol, StructuralType.NonStructural);
                 ////Helper.PlaceAdaptiveMarkerLine("Red", elementSymbol.CentrePoint.Xyz, elementSymbol.CentrePoint.Xyz.Add(A));
                 ////Helper.PlaceAdaptiveMarkerLine("Green", elementSymbol.CentrePoint.Xyz, elementSymbol.CentrePoint.Xyz.Add(B));
 
@@ -236,7 +236,7 @@ namespace Revit_PCF_Importer
 
                 ////double dotProduct = vC.DotProduct(vA);
                 ////double rotAngle = System.Math.Acos(dotProduct);
-                ////var rotLine = Line.CreateUnbound(elementSymbol.CentrePoint.Xyz, normRotAxis);
+                ////var rotLine = Line.CreateUnbound(elementSymbol.CentrePoint.Xyz, normRotAxis); //Rotation line must be BOUND!!!!
 
                 //////Test rotation
                 ////Transform trf = Transform.CreateRotationAtPoint(normRotAxis, rotAngle, elementSymbol.CentrePoint.Xyz);
@@ -279,7 +279,7 @@ namespace Revit_PCF_Importer
                 //    return Result.Failed;
                 //}
 
-                //Element element = doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, teeSymbol, StructuralType.NonStructural);
+                //Element element = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, teeSymbol, StructuralType.NonStructural);
 
                 //FamilyInstance tee = (FamilyInstance)element;
                 
@@ -324,12 +324,12 @@ namespace Revit_PCF_Importer
 
                 if (c1 != null && c2 != null && c3 != null)
                 {
-                    Element element = doc.Create.NewTeeFitting(c1, c2, c3);
-                    if (pipe1 != null) doc.Delete(pipe1.Id);
-                    if (pipe2 != null) doc.Delete(pipe2.Id);
-                    if (pipe3 != null) doc.Delete(pipe3.Id);
+                    Element element = PCFImport.doc.Create.NewTeeFitting(c1, c2, c3);
+                    if (pipe1 != null) PCFImport.doc.Delete(pipe1.Id);
+                    if (pipe2 != null) PCFImport.doc.Delete(pipe2.Id);
+                    if (pipe3 != null) PCFImport.doc.Delete(pipe3.Id);
                     elementSymbol.CreatedElement = element;
-                    doc.Regenerate();
+                    PCFImport.doc.Regenerate();
                     return Result.Succeeded;
                 }
                 //If this point is reached, something has failed
@@ -349,7 +349,7 @@ namespace Revit_PCF_Importer
                 FilteredElementCollector collector = new FilteredElementCollector(PCFImport.doc);
                 Filter filter;
                 filter = new Filter("EN 10253-2 - Cap: Standard", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
-                    //Hardcoded until selection is implemented
+                //Hardcoded until selection is implemented
                 FamilySymbol capSymbol =
                     collector.OfCategory(BuiltInCategory.OST_PipeFitting)
                         .WherePasses(filter.epf)
@@ -373,24 +373,24 @@ namespace Revit_PCF_Importer
 
                 firstMatch = (
                     from elem in allElementsWithConnectors
-                    //Get all elements with connectors in document in a collector
+                    //Get all elements with connectors in PCFImport.document in a collector
                     select CreatorHelper.GetConnectorSet(elem)
                     //Retrieve the connector set of each element in collector
                     into connectorSet //Pass it on
                     from Connector c in connectorSet //Declare that we are looking at the connectors
                     where Util.IsEqual(elementSymbol.EndPoint1.Xyz, c.Origin)
-                        //Compare the location from the symbol to each connector in the document
+                        //Compare the location from the symbol to each connector in the PCFImport.document
                     select c.Origin).FirstOrDefault(); //Break on first match
 
                 secondMatch = (
                     from elem in allElementsWithConnectors
-                    //Get all elements with connectors in document in a collector
+                    //Get all elements with connectors in PCFImport.document in a collector
                     select CreatorHelper.GetConnectorSet(elem)
                     //Retrieve the connector set of each element in collector
                     into connectorSet //Pass it on
                     from Connector c in connectorSet //Declare that we are looking at the connectors
                     where Util.IsEqual(elementSymbol.EndPoint2.Xyz, c.Origin)
-                        //Compare the location from the symbol to each connector in the document
+                        //Compare the location from the symbol to each connector in the PCFImport.document
                     select c.Origin).FirstOrDefault(); //Break on first match
                 //If no matching location is found -- fail the operation
                 if (firstMatch == null && secondMatch == null)
@@ -399,7 +399,7 @@ namespace Revit_PCF_Importer
                                   " could not be determined.");
                     return Result.Failed;
                 }
-                //Select the correct location for placement
+                //Select the correct location for placement assuming always only one correct match
                 XYZ placementLocation = null;
                 PointInSpace placementEnd = null;
                 XYZ otherLocation = null;
@@ -420,8 +420,9 @@ namespace Revit_PCF_Importer
                     otherEnd = elementSymbol.EndPoint1;
                 }
 
+                
                 //Place the instance
-                Element cap = doc.Create.NewFamilyInstance(placementLocation, capSymbol,
+                Element cap = PCFImport.doc.Create.NewFamilyInstance(placementLocation, capSymbol,
                     StructuralType.NonStructural);
 
                 ConnectorSet conSet = CreatorHelper.GetConnectorSet(cap);
@@ -434,16 +435,19 @@ namespace Revit_PCF_Importer
                 IList<Connector> allPipeConnectors = CreatorHelper.GetAllPipeConnectors();
 
                 //Determine the corresponding pipe connectors
-                Connector c2 = (from Connector c in allPipeConnectors where Util.IsEqual(placementLocation, c.Origin) select c)
+                Connector c2 =
+                    (from Connector c in allPipeConnectors where Util.IsEqual(placementLocation, c.Origin) select c)
                         .FirstOrDefault();
+
+                if (c2 != null) pipe1 = c2.Owner as Pipe;
 
                 ////Find the other connector (again...)
                 //Connector c2 = (
-                //    from elem in allElementsWithConnectors //Get all elements with connectors in document in a collector
+                //    from elem in allElementsWithConnectors //Get all elements with connectors in PCFImport.document in a collector
                 //    select CreatorHelper.GetConnectorSet(elem) //Retrieve the connector set of each element in collector
                 //    into connectorSet //Pass it on
                 //    from Connector c in connectorSet //Declare that we are looking at the connectors
-                //    where Util.IsEqual(c1.Origin, c.Origin) //Compare the connector from the cap to each connector in the document
+                //    where Util.IsEqual(c1.Origin, c.Origin) //Compare the connector from the cap to each connector in the PCFImport.document
                 //    select c).FirstOrDefault(); //Break on first match
 
                 //Create a dummy pipe to attach the cap to
@@ -452,52 +456,66 @@ namespace Revit_PCF_Importer
                     pipe1 = CreatorHelper.CreateDummyPipe(placementLocation, otherLocation,
                         placementEnd, elementSymbol);
                     c2 = CreatorHelper.MatchConnector(placementLocation, pipe1);
+                    elementSymbol.DummyToDelete = pipe1;
                 }
-
+                
                 #region Geometric manipulation
                 //http://thebuildingcoder.typepad.com/blog/2012/05/create-a-pipe-cap.html
                 Connector capConnector = c1;
                 Connector start = c2;
+                //Select the OTHER connector
                 MEPCurve hostPipe = start.Owner as MEPCurve;
                 Connector end = (from Connector c in hostPipe.ConnectorManager.Connectors
-                                 where (int)c.ConnectorType == 1 && c.Id != start.Id //Select the OTHER connector
-                                 select c).FirstOrDefault();
-                XYZ dir = start.Origin - end.Origin;
-                dir.Normalize();
-                XYZ pipeHorizontalDirection = new XYZ(dir.X, dir.Y, 0.0); //.Normalize();
+                    where (int) c.ConnectorType == 1 && c.Id != start.Id
+                    select c).FirstOrDefault();
+                XYZ dir = (start.Origin - end.Origin).Normalize();
+                XYZ pipeHorizontalDirection = new XYZ(dir.X, dir.Y, 0.0).Normalize(); //Only for horizontal pipes! Fix this if the pipes are in any other direction
                 XYZ connectorDirection = -capConnector.CoordinateSystem.BasisZ;
                 double zRotationAngle = pipeHorizontalDirection.AngleTo(connectorDirection);
                 Transform trf = Transform.CreateRotationAtPoint(XYZ.BasisZ, zRotationAngle, start.Origin);
                 XYZ testRotation = trf.OfVector(connectorDirection).Normalize();
-                if (Math.Abs(testRotation.DotProduct(pipeHorizontalDirection) - 1) > 0.00001) zRotationAngle = -zRotationAngle;
-                Line axis = Line.CreateUnbound(start.Origin, end.Origin+XYZ.BasisZ);
+                if (Math.Abs(testRotation.DotProduct(pipeHorizontalDirection) - 1) > 0.00001)
+                    zRotationAngle = -zRotationAngle;
+                Line axis = Line.CreateBound(start.Origin, start.Origin + XYZ.BasisZ); //CREATE BOUND FOR ROTATION FFS!!!! It cost me two days of frustration
                 cap.Location.Rotate(axis, zRotationAngle);
                 #endregion
 
                 #region Debug
 
-                var marker = Helper.PlaceAdaptiveMarkerLine("Green", start.Origin, end.Origin+XYZ.BasisZ);
-                Parameter parameter = marker.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS);
-                parameter.Set(Conversion.RadianToDegree(zRotationAngle).ToString());
-                
+                //var marker = Helper.PlaceAdaptiveMarkerLine("Green", start.Origin, start.Origin + XYZ.BasisZ);
+                //Parameter parameter = cap.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS);
+                //parameter.Set(Conversion.RadianToDegree(zRotationAngle).ToString());
+
+                ////Determine the actual axis of rotation
+                //XYZ newConnectorDirection = -capConnector.CoordinateSystem.BasisZ;
+                //XYZ actualAxis = (connectorDirection.CrossProduct(newConnectorDirection)).Normalize();
+                //var markerActualAxis = Helper.PlaceAdaptiveMarkerLine("Red", start.Origin, start.Origin + actualAxis);
+
+                ////Marker line at original connector direction
+                //Helper.PlaceAdaptiveMarkerLine("Yellow", start.Origin, start.Origin + pipeHorizontalDirection);
+
+                ////Marker line at new connector direction
+                //Helper.PlaceAdaptiveMarkerLine("Orange", start.Origin, start.Origin + connectorDirection);
 
                 #endregion
 
+                Parameter sizeParameter = cap.LookupParameter("Nominal Diameter 1"); //Hardcoded until inmplement
+                sizeParameter.Set(pipe1.Diameter);
 
-                doc.Regenerate();
-                c2.ConnectTo(c1);
                 elementSymbol.CreatedElement = cap;
-                doc.Regenerate();
-                elementSymbol.DummyToDelete = pipe1;
-                //if (pipe1 != null) doc.Delete(pipe1.Id);
+
+                c1.ConnectTo(c2);
+                
                 return Result.Succeeded;
 
             }
+
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                throw new Exception(e.Message);
+                //throw new Exception(e.Message);
             }
+            return Result.Failed;
         }
     }
 }
