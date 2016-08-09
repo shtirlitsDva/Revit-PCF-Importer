@@ -14,6 +14,7 @@ using Autodesk.Revit.ApplicationServices;
 using BuildingCoder;
 using PCF_Functions;
 using iv = PCF_Functions.InputVars;
+using ch = PCF_Functions.CreatorHelper;
 
 namespace Revit_PCF_Importer
 {
@@ -30,6 +31,7 @@ namespace Revit_PCF_Importer
         Result ELBOW(ElementSymbol elementSymbol);
         Result TEE(ElementSymbol elementSymbol);
         Result CAP(ElementSymbol elementSymbol);
+        Result FLANGE(ElementSymbol elementSymbol);
     }
 
     public class ProcessElements : IProcessElements
@@ -155,7 +157,7 @@ namespace Revit_PCF_Importer
 
                 #region Create by NewElbowFitting
                 //Get all pipe connectors
-                IList<Connector> allPipeConnectors = CreatorHelper.GetAllPipeConnectors();
+                IList<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
 
                 //Get the actual endpoints of the elbow
                 XYZ p1 = elementSymbol.EndPoint1.Xyz; XYZ p2 = elementSymbol.EndPoint2.Xyz;
@@ -169,14 +171,14 @@ namespace Revit_PCF_Importer
 
                 if (c1 == null)
                 {
-                    pipe1 = CreatorHelper.CreateDummyPipe(p1, elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint1, elementSymbol);
-                    c1 = CreatorHelper.MatchConnector(p1, pipe1);
+                    pipe1 = ch.CreateDummyPipe(p1, elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint1, elementSymbol);
+                    c1 = ch.MatchConnector(p1, pipe1);
                 }
 
                 if (c2 == null)
                 {
-                    pipe2 = CreatorHelper.CreateDummyPipe(p2, elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint2, elementSymbol);
-                    c2 = CreatorHelper.MatchConnector(p2, pipe2);
+                    pipe2 = ch.CreateDummyPipe(p2, elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint2, elementSymbol);
+                    c2 = ch.MatchConnector(p2, pipe2);
                 }
 
                 if (c1 != null && c2 != null)
@@ -291,7 +293,7 @@ namespace Revit_PCF_Importer
                 #endregion
 
                 //Get all pipe connectors
-                IList<Connector> allPipeConnectors = CreatorHelper.GetAllPipeConnectors();
+                IList<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
 
                 //Get the actual endpoints of the elbow
                 XYZ p1 = elementSymbol.EndPoint1.Xyz; XYZ p2 = elementSymbol.EndPoint2.Xyz; XYZ p3 = elementSymbol.Branch1Point.Xyz;
@@ -306,20 +308,20 @@ namespace Revit_PCF_Importer
 
                 if (c1 == null)
                 {
-                    pipe1 = CreatorHelper.CreateDummyPipe(p1, elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint1, elementSymbol);
-                    c1 = CreatorHelper.MatchConnector(p1, pipe1);
+                    pipe1 = ch.CreateDummyPipe(p1, elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint1, elementSymbol);
+                    c1 = ch.MatchConnector(p1, pipe1);
                 }
 
                 if (c2 == null)
                 {
-                    pipe2 = CreatorHelper.CreateDummyPipe(p2, elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint2, elementSymbol);
-                    c2 = CreatorHelper.MatchConnector(p2, pipe2);
+                    pipe2 = ch.CreateDummyPipe(p2, elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint2, elementSymbol);
+                    c2 = ch.MatchConnector(p2, pipe2);
                 }
 
                 if (c3 == null)
                 {
-                    pipe3 = CreatorHelper.CreateDummyPipe(p3, elementSymbol.CentrePoint.Xyz, elementSymbol.Branch1Point, elementSymbol);
-                    c3 = CreatorHelper.MatchConnector(p3, pipe3);
+                    pipe3 = ch.CreateDummyPipe(p3, elementSymbol.CentrePoint.Xyz, elementSymbol.Branch1Point, elementSymbol);
+                    c3 = ch.MatchConnector(p3, pipe3);
                 }
 
                 if (c1 != null && c2 != null && c3 != null)
@@ -365,7 +367,7 @@ namespace Revit_PCF_Importer
                 //Sooo... we match both end points to existing connectors in project to determine which one of them to use
 
                 FilteredElementCollector allElementsWithConnectors =
-                    CreatorHelper.GetElementsWithConnectors(PCFImport.doc);
+                    ch.GetElementsWithConnectors(PCFImport.doc);
 
                 XYZ firstMatch = null;
                 XYZ secondMatch = null;
@@ -373,7 +375,7 @@ namespace Revit_PCF_Importer
                 firstMatch = (
                     from elem in allElementsWithConnectors
                     //Get all elements with connectors in PCFImport.document in a collector
-                    select CreatorHelper.GetConnectorSet(elem)
+                    select ch.GetConnectorSet(elem)
                     //Retrieve the connector set of each element in collector
                     into connectorSet //Pass it on
                     from Connector c in connectorSet //Declare that we are looking at the connectors
@@ -384,7 +386,7 @@ namespace Revit_PCF_Importer
                 secondMatch = (
                     from elem in allElementsWithConnectors
                     //Get all elements with connectors in PCFImport.document in a collector
-                    select CreatorHelper.GetConnectorSet(elem)
+                    select ch.GetConnectorSet(elem)
                     //Retrieve the connector set of each element in collector
                     into connectorSet //Pass it on
                     from Connector c in connectorSet //Declare that we are looking at the connectors
@@ -424,14 +426,14 @@ namespace Revit_PCF_Importer
                 Element cap = PCFImport.doc.Create.NewFamilyInstance(placementLocation, capSymbol,
                     StructuralType.NonStructural);
 
-                ConnectorSet conSet = CreatorHelper.GetConnectorSet(cap);
+                ConnectorSet conSet = ch.GetConnectorSet(cap);
                 //The CAP should only have one connector
                 Connector c1 = (from Connector c in conSet where true select c).FirstOrDefault();
 
                 Pipe pipe1 = null;
 
                 //Get all pipe connectors
-                IList<Connector> allPipeConnectors = CreatorHelper.GetAllPipeConnectors();
+                IList<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
 
                 //Determine the corresponding pipe connectors
                 Connector c2 =
@@ -452,9 +454,8 @@ namespace Revit_PCF_Importer
                 //Create a dummy pipe to attach the cap to
                 if (c2 == null)
                 {
-                    pipe1 = CreatorHelper.CreateDummyPipe(placementLocation, otherLocation,
-                        placementEnd, elementSymbol);
-                    c2 = CreatorHelper.MatchConnector(placementLocation, pipe1);
+                    pipe1 = ch.CreateDummyPipe(placementLocation, otherLocation, placementEnd, elementSymbol);
+                    c2 = ch.MatchConnector(placementLocation, pipe1);
                     elementSymbol.DummyToDelete = pipe1;
                 }
                 
@@ -515,6 +516,80 @@ namespace Revit_PCF_Importer
                 //throw new Exception(e.Message);
             }
             return Result.Failed;
+        }
+
+        public Result FLANGE(ElementSymbol elementSymbol)
+        {
+            FilteredElementCollector collector = new FilteredElementCollector(PCFImport.doc);
+            Filter filter;
+            filter = new Filter("Flange weld collar: PN25", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until selection is implemented
+            FamilySymbol flangeSymbol =
+                collector.OfCategory(BuiltInCategory.OST_PipeFitting)
+                    .WherePasses(filter.epf)
+                    .Cast<FamilySymbol>()
+                    .FirstOrDefault();
+
+            if (flangeSymbol == null)
+            {
+                Util.ErrorMsg("Family and Type for FLANGE at position " + elementSymbol.Position + " was not found.");
+                return Result.Failed;
+            }
+
+            //Place the instance at calculated midpoint
+            Element flange = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, flangeSymbol, StructuralType.NonStructural);
+
+            //Get all pipe connectors
+            IList<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
+
+            //Get the actual endpoints of the flange
+            XYZ p1 = elementSymbol.EndPoint1.Xyz; XYZ p2 = elementSymbol.EndPoint2.Xyz;
+
+            //Get the flange connectors
+            Connector c1 = ch.GetSecondaryConnector(ch.GetConnectorSet(flange));
+
+            //Determine the corresponding pipe connectors
+            var c2 = (from Connector c in allPipeConnectors where Util.IsEqual(p1, c.Origin) select c).FirstOrDefault();
+
+            Pipe pipe1 = null;
+            if (c2 != null) pipe1 = c2.Owner as Pipe;
+
+            if (c2 == null)
+            {
+                pipe1 = ch.CreateDummyPipe(p1, p2, elementSymbol.EndPoint1, elementSymbol);
+                c2 = ch.MatchConnector(p1, pipe1);
+                elementSymbol.DummyToDelete = pipe1;
+            }
+
+            #region Geometric manipulation
+            //http://thebuildingcoder.typepad.com/blog/2012/05/create-a-pipe-cap.html
+            Connector flangeConnector = c1;
+            Connector start = c2;
+            XYZ placementPoint = elementSymbol.CentrePoint.Xyz;
+            //Select the OTHER connector
+            MEPCurve hostPipe = start.Owner as MEPCurve;
+            Connector end = (from Connector c in hostPipe.ConnectorManager.Connectors
+                             where (int)c.ConnectorType == 1 && c.Id != start.Id
+                             select c).FirstOrDefault();
+            XYZ dir = (start.Origin - end.Origin).Normalize();
+            XYZ pipeHorizontalDirection = new XYZ(dir.X, dir.Y, 0.0).Normalize(); //Only for horizontal pipes! Fix this if the pipes are in any other direction
+            XYZ connectorDirection = -flangeConnector.CoordinateSystem.BasisZ;
+            double zRotationAngle = pipeHorizontalDirection.AngleTo(connectorDirection);
+            Transform trf = Transform.CreateRotationAtPoint(XYZ.BasisZ, zRotationAngle, start.Origin);
+            XYZ testRotation = trf.OfVector(connectorDirection).Normalize();
+            if (Math.Abs(testRotation.DotProduct(pipeHorizontalDirection) - 1) > 0.00001)
+                zRotationAngle = -zRotationAngle;
+            Line axis = Line.CreateBound(placementPoint, placementPoint + XYZ.BasisZ); //CREATE BOUND FOR ROTATION FFS!!!! It cost me two days of frustration
+            flange.Location.Rotate(axis, zRotationAngle);
+            #endregion
+
+            Parameter sizeParameter = flange.LookupParameter("Nominal Diameter 1"); //Hardcoded until inmplement
+            sizeParameter.Set(pipe1.Diameter);
+
+            elementSymbol.CreatedElement = flange;
+
+            c1.ConnectTo(c2);
+
+            return Result.Succeeded;
         }
     }
 }

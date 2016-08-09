@@ -37,7 +37,8 @@ namespace Revit_PCF_Importer
                 {"PIPE", _keywordProcessor.GENERAL},
                 {"ELBOW", _keywordProcessor.GENERAL},
                 {"TEE", _keywordProcessor.GENERAL},
-                {"CAP", _keywordProcessor.GENERAL}
+                {"CAP", _keywordProcessor.GENERAL},
+                {"FLANGE", _keywordProcessor.FLANGE}
             };
             return dictionary;
         }
@@ -107,7 +108,8 @@ namespace Revit_PCF_Importer
                 {"PIPE", _processElements.PIPE },
                 {"ELBOW", _processElements.ELBOW },
                 {"TEE", _processElements.TEE},
-                {"CAP", _processElements.CAP}
+                {"CAP", _processElements.CAP},
+                {"FLANGE", _processElements.FLANGE}
             };
             return dictionary;
         }

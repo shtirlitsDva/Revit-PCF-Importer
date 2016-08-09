@@ -31,6 +31,7 @@ namespace Revit_PCF_Importer
         Result UNITS_WEIGHT(ElementSymbol elementSymbol);
         Result PIPELINE_REFERENCE(ElementSymbol elementSymbol);
         Result GENERAL(ElementSymbol elementSymbol);
+        Result FLANGE(ElementSymbol elementSymbol);
 
         //Element level keywords
         Result ELEMENT_ATTRIBUTE_NOT_IMPLEMENTED(ElementSymbol elementSymbol, string line);
@@ -155,6 +156,21 @@ namespace Revit_PCF_Importer
                 if (Result.Succeeded == result) continue;
                 if (Result.Failed == result) return result;
             }
+            return Result.Succeeded;
+        }
+
+        public Result FLANGE(ElementSymbol elementSymbol)
+        {
+            foreach (string line in elementSymbol.SourceData)
+            {
+                Result result = PCFImport.PcfDict.ProcessElementLevelKeywords(elementSymbol, line);
+                if (Result.Succeeded == result) continue;
+                if (Result.Failed == result) return result;
+            }
+
+            elementSymbol.CentrePoint.Xyz = Util.Midpoint(elementSymbol.EndPoint1.Xyz, elementSymbol.EndPoint2.Xyz);
+            elementSymbol.CentrePoint.Initialized = true;
+
             return Result.Succeeded;
         }
         #endregion

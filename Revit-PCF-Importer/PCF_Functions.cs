@@ -993,6 +993,26 @@ namespace PCF_Functions
 
             return connector;
         }
+
+        public static Connector MatchConnector(XYZ pointToMatch, ConnectorSet conSet)
+        {
+            Connector connector = null;
+            connector = (from Connector c in conSet
+                         where Util.IsEqual(pointToMatch, c.Origin)
+                         select c).FirstOrDefault();
+
+            return connector;
+        }
+
+        public static Connector GetSecondaryConnector(ConnectorSet conSet)
+        {
+            Connector connector = null;
+            connector = (from Connector c in conSet
+                         where c.GetMEPConnectorInfo().IsSecondary.Equals(true)
+                         select c).FirstOrDefault();
+
+            return connector;
+        }
     }
 
     public class Helper
