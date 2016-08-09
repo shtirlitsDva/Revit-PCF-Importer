@@ -348,8 +348,7 @@ namespace Revit_PCF_Importer
             {
                 FilteredElementCollector collector = new FilteredElementCollector(PCFImport.doc);
                 Filter filter;
-                filter = new Filter("EN 10253-2 - Cap: Standard", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
-                //Hardcoded until selection is implemented
+                filter = new Filter("EN 10253-2 - Cap: Standard", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until selection is implemented
                 FamilySymbol capSymbol =
                     collector.OfCategory(BuiltInCategory.OST_PipeFitting)
                         .WherePasses(filter.epf)
