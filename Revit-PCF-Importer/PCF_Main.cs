@@ -15,6 +15,7 @@ using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
 
 using iv = PCF_Functions.InputVars;
+using mySettings = Revit_PCF_Importer.Properties.Settings;
 using BuildingCoder;
 using PCF_Functions;
 
@@ -22,9 +23,7 @@ using PCF_Functions;
 
 namespace Revit_PCF_Importer
 {
-    [Transaction(TransactionMode.Manual)]
-    [Regeneration(RegenerationOption.Manual)]
-    public class PCFImport : IExternalCommand
+    public class PCFImport
     {
         //Declare the element collector
         public static ElementCollection ExtractedElementCollection;
@@ -35,19 +34,18 @@ namespace Revit_PCF_Importer
         //Declare static dictionary for creating
         public static PCF_Creator PcfCreator;
 
-        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+        public Result ExecuteMyCommand(UIApplication uiApp, ref string message)
         {
-            UIApplication uiapp = commandData.Application;
-            UIDocument uidoc = uiapp.ActiveUIDocument;
-            Application app = uiapp.Application;
+            UIDocument uidoc = uiApp.ActiveUIDocument;
+            Application app = uiApp.Application;
             doc = uidoc.Document;
             PcfDict = new PCF_Dictionary(new KeywordProcessor());
 
             ExtractedElementCollection = new ElementCollection();
 
-            //Read the input file
+            //Read the input PCF file
             FileReader fileReader = new FileReader();
-            string[] readFile = fileReader.ReadFile();
+            string[] readFile = fileReader.ReadFile(mySettings.Default.pcfPath);
             ;
             //This method collects all top-level element strings and creates ElementSymbols with data
             Parser.CreateInitialElementList(ExtractedElementCollection, readFile);
@@ -64,6 +62,9 @@ namespace Revit_PCF_Importer
             {
                 PcfDict.ProcessTopLevelKeywords(elementSymbol);
             }
+
+            //Read configuration
+
             ;
             using (TransactionGroup txGp = new TransactionGroup(doc))
             {

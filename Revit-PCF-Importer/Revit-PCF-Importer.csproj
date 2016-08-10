@@ -40,6 +40,7 @@
     <StartProgram>$(ProgramW6432)\Autodesk\Revit 2017\Revit.exe</StartProgram>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PresentationCore" />
     <Reference Include="RevitAPI">
       <HintPath>..\..\..\Programs\IDSP17\Revit 2017\RevitAPI.dll</HintPath>
       <Private>False</Private>
@@ -49,27 +50,52 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ParameterData.cs" />
     <Compile Include="PCF_Creator.cs" />
     <Compile Include="PCF_Dictionary.cs" />
     <Compile Include="PCF_ElementSymbol.cs" />
+    <Compile Include="PCF_Importer_form.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PCF_Importer_form.Designer.cs">
+      <DependentUpon>PCF_Importer_form.cs</DependentUpon>
+    </Compile>
     <Compile Include="PCF_Parser.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
     <Compile Include="RadioBox.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Utils.cs" />
-    <None Include="App.cs" />
+    <None Include="app.config" />
+    <Compile Include="App.cs" />
     <Compile Include="PCF_FileReader.cs" />
     <Compile Include="PCF_Functions.cs" />
     <Compile Include="PCF_Main.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Revit-PCF-Importer.addin" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PCF_Importer_form.resx">
+      <DependentUpon>PCF_Importer_form.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
