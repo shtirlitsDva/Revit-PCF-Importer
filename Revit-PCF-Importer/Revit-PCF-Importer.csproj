@@ -59,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ParameterData.cs" />
+    <Compile Include="PCF_Configuration.cs" />
     <Compile Include="PCF_Creator.cs" />
     <Compile Include="PCF_Dictionary.cs" />
     <Compile Include="PCF_ElementSymbol.cs" />

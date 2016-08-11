@@ -56,14 +56,17 @@ namespace Revit_PCF_Importer
             //This method extracts element data from the file
             Parser.ExtractElementDefinition(ExtractedElementCollection, readFile);
             ;
-            
+
             //This method processes elements
             foreach (ElementSymbol elementSymbol in ExtractedElementCollection.Elements)
             {
                 PcfDict.ProcessTopLevelKeywords(elementSymbol);
             }
 
-            //Read configuration
+            #region CONFIGURATION
+            
+
+            #endregion
 
             ;
             using (TransactionGroup txGp = new TransactionGroup(doc))
