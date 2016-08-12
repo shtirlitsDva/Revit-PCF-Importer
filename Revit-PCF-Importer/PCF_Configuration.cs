@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
+using Autodesk.Revit.UI;
+using BuildingCoder;
+using xel = Microsoft.Office.Interop.Excel;
 
 namespace Revit_PCF_Importer
 {
@@ -24,6 +27,32 @@ namespace Revit_PCF_Importer
             return grouped;
         }
 
+        public void ExportPipelinesElementsToExcel(
+            IEnumerable<IGrouping<string, IGrouping<string, ElementSymbol>>> source)
+        {
+            xel.Application excel = new xel.Application();
+            if (null == excel)
+            {
+                Util.ErrorMsg("Failed to get or start Excel.");
+            }
+            excel.Visible = true;
 
+            xel.Workbook workbook = excel.Workbooks.Add(Missing.Value);
+            xel.Worksheet worksheet;
+            worksheet = excel.ActiveSheet as xel.Worksheet; //New worksheet
+            worksheet.Name = "PCF Configuration"; //Name the created worksheet
+
+            worksheet.Columns.ColumnWidth = 20;
+            worksheet.Cells[1, 1] = "PCF Keyword"; //First column header
+            worksheet.Cells[1, 2] = "Family: Type"; //Second column header
+            worksheet.Range["A1", "B2"].Font.Bold = true; //Make headers bold
+
+            //Export the PCF keywords
+            int row = 2, col = 2;
+
+            var grouped = source;
+
+
+        }
     }
 }

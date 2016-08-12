@@ -40,6 +40,11 @@
     <StartProgram>$(ProgramW6432)\Autodesk\Revit 2017\Revit.exe</StartProgram>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+      <HintPath>..\packages\Microsoft.Office.Interop.Excel.15.0.4420.1017\lib\net20\Microsoft.Office.Interop.Excel.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="RevitAPI">
       <HintPath>..\..\..\Programs\IDSP17\Revit 2017\RevitAPI.dll</HintPath>
@@ -85,6 +90,7 @@
     <Compile Include="PCF_Functions.cs" />
     <Compile Include="PCF_Main.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
