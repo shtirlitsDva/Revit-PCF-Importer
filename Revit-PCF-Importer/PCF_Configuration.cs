@@ -48,11 +48,26 @@ namespace Revit_PCF_Importer
             worksheet.Range["A1", "B2"].Font.Bold = true; //Make headers bold
 
             //Export the PCF keywords
-            int row = 2, col = 2;
+            int row = 1;//, col = 2;
 
             var grouped = source;
 
-
+            //Iterate pipline references
+            foreach (IGrouping<string, IGrouping<string, ElementSymbol>> pipelineGroup in grouped)
+            {
+                //Ignore PRE-PIPELINE and MATERIALS
+                if (string.Equals(pipelineGroup.Key, "PRE-PIPELINE") || string.Equals(pipelineGroup.Key, "MATERIALS")) continue;
+                //Write the pipeline values to EXCEL
+                row++; //Increment row
+                worksheet.Cells[row, 1] = "PIPELINE-REFERENCE";
+                worksheet.Cells[row, 2] = pipelineGroup.Key;
+                //Write the top level keywords
+                foreach (IGrouping<string, ElementSymbol> type in pipelineGroup)
+                {
+                    row++; //Increment row
+                    worksheet.Cells[row, 1] = type.Key;
+                }
+            }
         }
     }
 }
