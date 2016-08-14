@@ -1048,4 +1048,26 @@ namespace PCF_Functions
             return instance;
         }
     }
+
+    public static class MyExtensions
+    {
+        /// <summary>
+        /// Extension method which searches a list of strings to determine if it contains a specific string.
+        /// http://www.dotnetperls.com/list-contains
+        /// </summary>
+        /// <param name="list"></param>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        public static bool ContainsString(this IList<string> list, string item)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] == item)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 }

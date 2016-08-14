@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using Autodesk.Revit.UI;
 using BuildingCoder;
+using PCF_Functions;
 using xel = Microsoft.Office.Interop.Excel;
 
 namespace Revit_PCF_Importer
@@ -47,6 +48,12 @@ namespace Revit_PCF_Importer
             worksheet.Cells[1, 2] = "Family: Type"; //Second column header
             worksheet.Range["A1", "B2"].Font.Bold = true; //Make headers bold
 
+            //List of items that are handled by the PipeType and not instance placing
+            //Remember to update this list!!!
+            IList<string> typesHandledByPipeType = new List<string>();
+            typesHandledByPipeType.Add("ELBOW");
+            typesHandledByPipeType.Add("TEE");
+
             //Export the PCF keywords
             int row = 1;//, col = 2;
 
@@ -66,6 +73,8 @@ namespace Revit_PCF_Importer
                 {
                     row++; //Increment row
                     worksheet.Cells[row, 1] = type.Key;
+                    if (MyExtensions.ContainsString(typesHandledByPipeType,type.Key))
+                        worksheet.Cells[row, 2] = "Handled by PipeType";
                 }
             }
         }
