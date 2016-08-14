@@ -16,6 +16,7 @@ using Revit_PCF_Importer;
 using iv = PCF_Functions.InputVars;
 using pdef = PCF_Functions.ParameterDefinition;
 using plst = PCF_Functions.ParameterList;
+using pif = Revit_PCF_Importer.PCF_Importer_form;
 
 namespace PCF_Functions
 {
@@ -678,7 +679,7 @@ namespace PCF_Functions
 
                     //Get the PipingSystemType based on the reference
                     //Instantiate collector
-                    FilteredElementCollector collector = new FilteredElementCollector(PCFImport.doc);
+                    FilteredElementCollector collector = new FilteredElementCollector(pif._doc);
 
                     Filter filter = new Filter(curPipelineReference, BuiltInParameter.RBS_SYSTEM_ABBREVIATION_PARAM);
                     //Get the elements

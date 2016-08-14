@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using BuildingCoder;
+using PCF_Functions;
 using Form = System.Windows.Forms.Form;
 using mySettings = Revit_PCF_Importer.Properties.Settings;
 using iv = PCF_Functions.InputVars;
@@ -26,6 +27,10 @@ namespace Revit_PCF_Importer
         public string _excelPath = string.Empty;
         private string _pcfPath = string.Empty;
         public string[] readLines;
+        //Declare static dictionary for parsing
+        public static PCF_Dictionary PcfDict;
+        //Declare static dictionary for creating
+        public static PCF_Creator PcfCreator;
 
         public PCF_Importer_form(ExternalCommandData cData, ref string message)
         {
@@ -43,6 +48,9 @@ namespace Revit_PCF_Importer
             //Init textboxes
             textBox1.Text = _pcfPath;
             textBox2.Text = _excelPath;
+
+            PcfDict = new PCF_Dictionary(new KeywordProcessor());
+            PcfCreator = new PCF_Creator(new ProcessElements());
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -75,6 +83,29 @@ namespace Revit_PCF_Importer
             Result result = pcfImport.ExecuteMyCommand(_uiapp, ref _message);
             if (result == Result.Succeeded) Util.InfoMsg("PCF data imported successfully!");
             if (result == Result.Failed) Util.InfoMsg("PCF data import failed for some reason.");
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            ElementCollection ExtractedElementCollection = new ElementCollection();
+            PCF_Dictionary PcfDict = new PCF_Dictionary(new KeywordProcessor());
+
+            //Read the input PCF file
+            FileReader fileReader = new FileReader();
+            string[] readFile = fileReader.ReadFile(mySettings.Default.pcfPath);
+            //This method collects all top-level element strings and creates ElementSymbols with data
+            Parser.CreateInitialElementList(ExtractedElementCollection, readFile);
+            //This method compares all element symbols and gets the amount of line for their definition
+            Parser.IndexElementDefinitions(ExtractedElementCollection, readFile);
+            //This method extracts element data from the file
+            Parser.ExtractElementDefinition(ExtractedElementCollection, readFile);
+            //This method processes elements
+            foreach (ElementSymbol elementSymbol in ExtractedElementCollection.Elements)
+            {
+                PcfDict.ProcessTopLevelKeywords(elementSymbol);
+            }
+
+            PCF_Configuration.ExportPipelinesElementsToExcel(ExtractedElementCollection.Elements);
         }
     }
 }

@@ -12,6 +12,7 @@ using BuildingCoder;
 using PCF_Functions;
 using iv = PCF_Functions.InputVars;
 using hm = Revit_PCF_Importer.HelperMethods;
+using pif = Revit_PCF_Importer.PCF_Importer_form;
 
 namespace Revit_PCF_Importer
 {
@@ -152,7 +153,7 @@ namespace Revit_PCF_Importer
         {
             foreach (string line in elementSymbol.SourceData)
             {
-                Result result = PCFImport.PcfDict.ProcessElementLevelKeywords(elementSymbol, line);
+                Result result = pif.PcfDict.ProcessElementLevelKeywords(elementSymbol, line);
                 if (Result.Succeeded == result) continue;
                 if (Result.Failed == result) return result;
             }
@@ -163,7 +164,7 @@ namespace Revit_PCF_Importer
         {
             foreach (string line in elementSymbol.SourceData)
             {
-                Result result = PCFImport.PcfDict.ProcessElementLevelKeywords(elementSymbol, line);
+                Result result = pif.PcfDict.ProcessElementLevelKeywords(elementSymbol, line);
                 if (Result.Succeeded == result) continue;
                 if (Result.Failed == result) return result;
             }
