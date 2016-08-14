@@ -53,6 +53,8 @@ namespace Revit_PCF_Importer
             IList<string> typesHandledByPipeType = new List<string>();
             typesHandledByPipeType.Add("ELBOW");
             typesHandledByPipeType.Add("TEE");
+            typesHandledByPipeType.Add("REDUCER-CONCENTRIC");
+            typesHandledByPipeType.Add("REDUCER-ECCENTRIC");
 
             //Export the PCF keywords
             int row = 1;//, col = 2;
