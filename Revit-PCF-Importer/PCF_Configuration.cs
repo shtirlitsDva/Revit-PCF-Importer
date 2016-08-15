@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.OleDb;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -13,6 +15,7 @@ namespace Revit_PCF_Importer
 {
     public static class PCF_Configuration
     {
+        #region Export configuration
         public static IEnumerable<IGrouping<string, IGrouping<string, ElementSymbol>>>
             GroupSymbols(IList<ElementSymbol> symbolList)
         {
@@ -116,5 +119,65 @@ namespace Revit_PCF_Importer
                 }
             }
         }
+        #endregion
+
+        #region Import configuration
+
+        //DataSet import is from here:
+        //http://stackoverflow.com/a/18006593/6073998
+        public static DataSet ImportExcelToDataSet(string fileName)
+        {
+            string connectionString = string.Format("provider=Microsoft.ACE.OLEDB.12.0;Data Source={0};Extended Properties=Excel 8.0;", fileName);
+
+            DataSet data = new DataSet();
+
+            foreach (var sheetName in GetExcelSheetNames(connectionString))
+            {
+                using (OleDbConnection con = new OleDbConnection(connectionString))
+                {
+                    var dataTable = new DataTable();
+                    string query = string.Format("SELECT * FROM [{0}]", sheetName);
+                    con.Open();
+                    OleDbDataAdapter adapter = new OleDbDataAdapter(query, con);
+                    adapter.Fill(dataTable);
+                    data.Tables.Add(dataTable);
+                }
+            }
+
+            return data;
+        }
+
+        static string[] GetExcelSheetNames(string connectionString)
+        {
+            OleDbConnection con = null;
+            DataTable dt = null;
+            con = new OleDbConnection(connectionString);
+            con.Open();
+            dt = con.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
+
+            if (dt == null)
+            {
+                return null;
+            }
+
+            String[] excelSheetNames = new String[dt.Rows.Count];
+            int i = 0;
+
+            foreach (DataRow row in dt.Rows)
+            {
+                excelSheetNames[i] = row["TABLE_NAME"].ToString();
+                i++;
+            }
+
+            return excelSheetNames;
+        }
+
+        public static void ExtractElementConfiguration(DataSet dataSet, ElementSymbol es)
+        {
+            
+        }
+
+        #endregion
+
     }
 }

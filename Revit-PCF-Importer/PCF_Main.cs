@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -46,16 +47,15 @@ namespace Revit_PCF_Importer
             //Read the input PCF file
             FileReader fileReader = new FileReader();
             string[] readFile = fileReader.ReadFile(mySettings.Default.pcfPath);
-            ;
+
             //This method collects all top-level element strings and creates ElementSymbols with data
             Parser.CreateInitialElementList(ExtractedElementCollection, readFile);
-            ;
-            //This method compares all element symbols and gets the amount of line for their definition
+
+            //This method compares all element symbols and gets the number of lines for their definition
             Parser.IndexElementDefinitions(ExtractedElementCollection, readFile);
-            ;
+
             //This method extracts element data from the file
             Parser.ExtractElementDefinition(ExtractedElementCollection, readFile);
-            ;
 
             //This method processes elements
             foreach (ElementSymbol elementSymbol in ExtractedElementCollection.Elements)
@@ -64,11 +64,26 @@ namespace Revit_PCF_Importer
             }
 
             #region CONFIGURATION
-            
+
+            DataSet dataSet = PCF_Configuration.ImportExcelToDataSet(mySettings.Default.excelPath);
+
+            foreach (ElementSymbol es in
+                from ElementSymbol es in ExtractedElementCollection.Elements
+                where !(
+                    string.Equals(es.PipelineReference, "PRE-PIPELINE") ||
+                    string.Equals(es.PipelineReference, "MATERIALS") ||
+                    string.Equals(es.ElementType, "PIPELINE-REFERENCE")
+                    )
+                select es)
+                
+            {
+                PCF_Configuration.ExtractElementConfiguration(dataSet, es);
+            }
 
             #endregion
 
-            ;
+            #region Element creation
+
             using (TransactionGroup txGp = new TransactionGroup(doc))
             {
                 txGp.Start("Create elements from PCF data");
@@ -135,9 +150,12 @@ namespace Revit_PCF_Importer
                 }
                 txGp.Assimilate();
             }
-            ;
 
-            //Test
+            #endregion
+        
+
+
+        //Test
             //int test = ExtractedElementCollection.Elements.Count;
 
             //using (Transaction tx = new Transaction(doc))
