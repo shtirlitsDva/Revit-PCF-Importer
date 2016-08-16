@@ -207,19 +207,43 @@ namespace PCF_Functions
 
     public class Filter
     {
-        BuiltInParameter testParam;
-        ParameterValueProvider pvp;
-        FilterStringRuleEvaluator str;
-        FilterStringRule paramFr;
-        public ElementParameterFilter epf;
-
-        public Filter(string valueQualifier, BuiltInParameter parameterName)
+        public static ElementParameterFilter ParameterValueFilter(string valueQualifier, BuiltInParameter parameterName)
         {
-            testParam = parameterName;
-            pvp = new ParameterValueProvider(new ElementId((int) testParam));
-            str = new FilterStringContains();
-            paramFr = new FilterStringRule(pvp, str, valueQualifier, false);
-            epf = new ElementParameterFilter(paramFr);
+            BuiltInParameter testParam = parameterName;
+            ParameterValueProvider pvp = new ParameterValueProvider(new ElementId((int) testParam));
+            FilterStringRuleEvaluator str = new FilterStringContains();
+            FilterStringRule paramFr = new FilterStringRule(pvp, str, valueQualifier, false);
+            ElementParameterFilter epf = new ElementParameterFilter(paramFr);
+            return epf;
+        }
+
+        public static LogicalOrFilter FamSymbolsAndPipeTypes()
+        {
+            BuiltInCategory[] bics = new BuiltInCategory[]
+            {
+                BuiltInCategory.OST_PipeAccessory,
+                BuiltInCategory.OST_PipeCurves,
+                BuiltInCategory.OST_PipeFitting,
+            };
+
+            IList<ElementFilter> a = new List<ElementFilter>(bics.Count());
+
+            foreach (BuiltInCategory bic in bics) a.Add(new ElementCategoryFilter(bic));
+
+            LogicalOrFilter categoryFilter = new LogicalOrFilter(a);
+
+            LogicalAndFilter familySymbolFilter = new LogicalAndFilter(categoryFilter,
+                new ElementClassFilter(typeof(FamilySymbol)));
+
+            IList<ElementFilter> b = new List<ElementFilter>();
+
+            b.Add(new ElementClassFilter(typeof(PipeType)));
+
+            b.Add(familySymbolFilter);
+
+            LogicalOrFilter classFilter = new LogicalOrFilter(b);
+
+            return classFilter;
         }
     }
 
@@ -681,9 +705,9 @@ namespace PCF_Functions
                     //Instantiate collector
                     FilteredElementCollector collector = new FilteredElementCollector(pif._doc);
 
-                    Filter filter = new Filter(curPipelineReference, BuiltInParameter.RBS_SYSTEM_ABBREVIATION_PARAM);
+                    ElementParameterFilter filter = Filter.ParameterValueFilter(curPipelineReference, BuiltInParameter.RBS_SYSTEM_ABBREVIATION_PARAM);
                     //Get the elements
-                    collector.OfClass(typeof (PipingSystemType)).WherePasses(filter.epf);
+                    collector.OfClass(typeof (PipingSystemType)).WherePasses(filter);
                         //Just to try something fun, if not working -- dispose
                     //Select correct systemType
                     //PipingSystemType sQuery = (from PipingSystemType st in collector
@@ -1028,10 +1052,10 @@ namespace PCF_Functions
         public static FamilyInstance PlaceAdaptiveMarkerLine(string typeName, XYZ p1, XYZ p2)
         {
             //Get the symbol
-            Filter filtermarker = new Filter("Marker Line: " + typeName,
+            ElementParameterFilter filter = Filter.ParameterValueFilter("Marker Line: " + typeName,
                 BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until implements
             FamilySymbol markerSymbol =
-                new FilteredElementCollector(PCFImport.doc).WherePasses(filtermarker.epf)
+                new FilteredElementCollector(PCFImport.doc).WherePasses(filter)
                     .Cast<FamilySymbol>()
                     .FirstOrDefault();
             // Create a new instance of an adaptive component family

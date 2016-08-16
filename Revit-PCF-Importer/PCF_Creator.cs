@@ -46,8 +46,8 @@ namespace Revit_PCF_Importer
         {
             try
             {
-                //Choose pipe type. Hardcoded value until a configuring process is devised.
-                ElementId pipeTypeId = new ElementId(3048519); //Hardcoded until configuring process is implemented
+                //Choose pipe type.
+                ElementId pipeTypeId = elementSymbol.PipeType.Id;
 
                 //Collect levels and select one level
                 FilteredElementCollector collector = new FilteredElementCollector(PCFImport.doc);
@@ -348,21 +348,6 @@ namespace Revit_PCF_Importer
         {
             try
             {
-                FilteredElementCollector collector = new FilteredElementCollector(PCFImport.doc);
-                Filter filter;
-                filter = new Filter("EN 10253-2 - Cap: Standard", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until selection is implemented
-                FamilySymbol capSymbol =
-                    collector.OfCategory(BuiltInCategory.OST_PipeFitting)
-                        .WherePasses(filter.epf)
-                        .Cast<FamilySymbol>()
-                        .FirstOrDefault();
-
-                if (capSymbol == null)
-                {
-                    Util.ErrorMsg("Family and Type for CAP at position " + elementSymbol.Position + " was not found.");
-                    return Result.Failed;
-                }
-
                 //The CAP has two end-points and no way to know which one of them to use to place the family
                 //Sooo... we match both end points to existing connectors in project to determine which one of them to use
 
@@ -423,7 +408,7 @@ namespace Revit_PCF_Importer
 
                 
                 //Place the instance
-                Element cap = PCFImport.doc.Create.NewFamilyInstance(placementLocation, capSymbol,
+                Element cap = PCFImport.doc.Create.NewFamilyInstance(placementLocation, elementSymbol.FamilySymbol,
                     StructuralType.NonStructural);
 
                 ConnectorSet conSet = ch.GetConnectorSet(cap);
@@ -520,23 +505,8 @@ namespace Revit_PCF_Importer
 
         public Result FLANGE(ElementSymbol elementSymbol)
         {
-            FilteredElementCollector collector = new FilteredElementCollector(PCFImport.doc);
-            Filter filter;
-            filter = new Filter("Flange weld collar: PN25", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until selection is implemented
-            FamilySymbol flangeSymbol =
-                collector.OfCategory(BuiltInCategory.OST_PipeFitting)
-                    .WherePasses(filter.epf)
-                    .Cast<FamilySymbol>()
-                    .FirstOrDefault();
-
-            if (flangeSymbol == null)
-            {
-                Util.ErrorMsg("Family and Type for FLANGE at position " + elementSymbol.Position + " was not found.");
-                return Result.Failed;
-            }
-
             //Place the instance at calculated midpoint
-            Element flange = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, flangeSymbol, StructuralType.NonStructural);
+            Element flange = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, elementSymbol.FamilySymbol, StructuralType.NonStructural);
 
             //Get all pipe connectors
             IList<Connector> allPipeConnectors = ch.GetAllPipeConnectors();

@@ -16,6 +16,8 @@ namespace Revit_PCF_Importer
         public StringCollection SourceData { get; set; } = new StringCollection();//This contains the raw data read from file
         public string PipelineReference { get; set; } = "PRE-PIPELINE"; //This contains the pipeline reference that was read
         public PipingSystemType PipingSystemType { get; set; } //Holds the PipeLineType for the element
+        public FamilySymbol FamilySymbol { get; set; } //Holds the family symbol if appropriate
+        public PipeType PipeType { get; set; } //Holds the pipe type if appropriate
         public int Position { get; set; } //Contains the position of the element in file
         public int DefinitionLengthInLines { get; set; } //Contains the number of lines that hold the element data in PCF file
         public PointInSpace EndPoint1 = new PointInSpace("END-POINT");

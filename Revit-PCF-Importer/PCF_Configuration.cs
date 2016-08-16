@@ -5,6 +5,8 @@ using System.Data.OleDb;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.UI;
 using BuildingCoder;
 using PCF_Functions;
@@ -76,7 +78,7 @@ namespace Revit_PCF_Importer
             xel.Workbook workbook = excel.Workbooks.Add(Missing.Value);
             xel.Worksheet worksheet;
             worksheet = excel.ActiveSheet as xel.Worksheet; //New worksheet
-            worksheet.Name = "PCF Configuration"; //Name the created worksheet
+            worksheet.Name = "Pipes and fittings"; //Name the created worksheet
 
             worksheet.Columns.ColumnWidth = 20;
             worksheet.Cells[1, 1] = "PIPELINE-REFERENCE"; //First column header
@@ -174,7 +176,39 @@ namespace Revit_PCF_Importer
 
         public static void ExtractElementConfiguration(DataSet dataSet, ElementSymbol es)
         {
-            
+            try
+            {
+                DataTableCollection dataTables = dataSet.Tables;
+
+                //Pipes and Fittings
+                var pipesAndFittingsConf =
+                    (from DataTable dataTable in dataTables
+                        where string.Equals(dataTable.TableName, "Pipes and fittings")
+                        select dataTable).FirstOrDefault();
+
+                //query is using the variables in the loop to query the dataset
+                EnumerableRowCollection<string> query = from value in pipesAndFittingsConf.AsEnumerable()
+                    where value.Field<string>(0) == es.PipelineReference
+                    select value.Field<string>(es.ElementType);
+
+                string familyAndType = query.FirstOrDefault().ToString();
+
+                FilteredElementCollector collector = new FilteredElementCollector(PCF_Importer_form._doc);
+
+                ElementParameterFilter filter = Filter.ParameterValueFilter(familyAndType, BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
+
+                LogicalOrFilter classFilter = Filter.FamSymbolsAndPipeTypes();
+
+                Element familySymbol = collector.WherePasses(classFilter).WherePasses(filter).FirstOrDefault();
+
+                if (es.ElementType == "PIPE") es.PipeType = (PipeType) familySymbol;
+                else es.FamilySymbol = (FamilySymbol) familySymbol;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
         }
 
         #endregion
