@@ -186,31 +186,38 @@ namespace Revit_PCF_Importer
                         where string.Equals(dataTable.TableName, "Pipes and fittings")
                         select dataTable).FirstOrDefault();
 
-                //query is using the variables in the loop to query the dataset
+                //query the element family and type is using the variables in the loop to query the dataset
                 EnumerableRowCollection<string> query = from value in pipesAndFittingsConf.AsEnumerable()
                     where value.Field<string>(0) == es.PipelineReference
                     select value.Field<string>(es.ElementType);
-
                 string familyAndType = query.FirstOrDefault().ToString();
-
                 FilteredElementCollector collector = new FilteredElementCollector(PCF_Importer_form._doc);
-
                 ElementParameterFilter filter = Filter.ParameterValueFilter(familyAndType, BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
-
                 LogicalOrFilter classFilter = Filter.FamSymbolsAndPipeTypes();
-
                 Element familySymbol = collector.WherePasses(classFilter).WherePasses(filter).FirstOrDefault();
 
-                if (es.ElementType == "PIPE") es.PipeType = (PipeType) familySymbol;
-                else es.FamilySymbol = (FamilySymbol) familySymbol;
+                if (es.ElementType == "PIPE") es.PipeType = (PipeType)familySymbol;
+                else es.FamilySymbol = (FamilySymbol)familySymbol;
+
+                //query the corresponding pipe family and type to add to the element symbol
+                //This is because pipe type is needed to create certain fittings
+                if (es.ElementType != "PIPE")
+                {
+                    EnumerableRowCollection<string> queryPipeType = from value in pipesAndFittingsConf.AsEnumerable()
+                                                            where value.Field<string>(0) == es.PipelineReference
+                                                            select value.Field<string>("PIPE");
+                    string pipeTypeName = queryPipeType.FirstOrDefault();
+                    FilteredElementCollector collectorPipeType = new FilteredElementCollector(PCF_Importer_form._doc);
+                    ElementParameterFilter filterPipeTypeName = Filter.ParameterValueFilter(pipeTypeName, BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
+                    Element pipeType = collectorPipeType.OfClass(typeof(PipeType)).WherePasses(filterPipeTypeName).FirstOrDefault();
+                    es.PipeType = (PipeType)pipeType;
+                }
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
             }
-
         }
-
         #endregion
 
     }

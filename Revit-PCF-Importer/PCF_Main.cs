@@ -69,7 +69,7 @@ namespace Revit_PCF_Importer
 
             foreach (ElementSymbol es in
                 from ElementSymbol es in ExtractedElementCollection.Elements
-                where !(
+                where !( //Filter out non pipeline elements
                     string.Equals(es.PipelineReference, "PRE-PIPELINE") ||
                     string.Equals(es.PipelineReference, "MATERIALS") ||
                     string.Equals(es.ElementType, "PIPELINE-REFERENCE")
