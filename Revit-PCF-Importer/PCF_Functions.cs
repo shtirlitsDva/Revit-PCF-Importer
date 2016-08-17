@@ -988,8 +988,7 @@ namespace PCF_Functions
         {
             Pipe pipe = null;
 
-            //Choose pipe type. Hardcoded value until a configuring process is devised.
-            ElementId pipeTypeId = new ElementId(3048519); //Hardcoded until configuring process is implemented
+            ElementId pipeTypeId = elementSymbol.PipeType.Id;
 
             //Collect levels and select one level
             FilteredElementCollector levelCollector = new FilteredElementCollector(PCFImport.doc);
