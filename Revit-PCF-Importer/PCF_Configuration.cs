@@ -5,6 +5,7 @@ using System.Data.OleDb;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.UI;
@@ -129,11 +130,15 @@ namespace Revit_PCF_Importer
         //http://stackoverflow.com/a/18006593/6073998
         public static DataSet ImportExcelToDataSet(string fileName)
         {
-            string connectionString = string.Format("provider=Microsoft.ACE.OLEDB.12.0;Data Source={0};Extended Properties=Excel 8.0;", fileName);
+            //On connection strings http://www.connectionstrings.com/excel/#p84
+            string connectionString =
+                string.Format(
+                    "provider=Microsoft.ACE.OLEDB.12.0;Data Source={0};Extended Properties=\"Excel 12.0;HDR=YES;IMEX=1\"",
+                    fileName);
 
             DataSet data = new DataSet();
 
-            foreach (var sheetName in GetExcelSheetNames(connectionString))
+            foreach (string sheetName in GetExcelSheetNames(connectionString))
             {
                 using (OleDbConnection con = new OleDbConnection(connectionString))
                 {
@@ -142,10 +147,19 @@ namespace Revit_PCF_Importer
                     con.Open();
                     OleDbDataAdapter adapter = new OleDbDataAdapter(query, con);
                     adapter.Fill(dataTable);
+
+                    //Remove ' and $ from sheetName
+                    Regex rgx = new Regex("[^a-zA-Z0-9 -]");
+                    string tableName = rgx.Replace(sheetName, "");
+
+                    dataTable.TableName = tableName;
                     data.Tables.Add(dataTable);
                 }
             }
 
+            if (data == null) Util.ErrorMsg("Data set is null");
+            if (data.Tables.Count < 1) Util.ErrorMsg("Table count in DataSet is 0");
+            
             return data;
         }
 
