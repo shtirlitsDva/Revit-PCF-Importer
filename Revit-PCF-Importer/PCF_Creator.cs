@@ -33,6 +33,7 @@ namespace Revit_PCF_Importer
         Result CAP(ElementSymbol elementSymbol);
         Result FLANGE(ElementSymbol elementSymbol);
         Result FLANGE_BLIND(ElementSymbol elementSymbol);
+        Result REDUCER_CONCENTRIC(ElementSymbol elementSymbol);
     }
 
     public class ProcessElements : IProcessElements
@@ -580,6 +581,53 @@ namespace Revit_PCF_Importer
             //Result result = CAP(elementSymbol);
             //return result;
             return Result.Succeeded;
+        }
+
+        public Result REDUCER_CONCENTRIC(ElementSymbol elementSymbol)
+        {
+            try
+            {
+                //Get all pipe connectors
+                IList<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
+
+                //Get the actual endpoints of the elbow
+                XYZ p1 = elementSymbol.EndPoint1.Xyz; XYZ p2 = elementSymbol.EndPoint2.Xyz;
+                //Determine the corresponding pipe connectors
+                var c1 = (from Connector c in allPipeConnectors where Util.IsEqual(p1, c.Origin) select c).FirstOrDefault();
+                var c2 = (from Connector c in allPipeConnectors where Util.IsEqual(p2, c.Origin) select c).FirstOrDefault();
+
+                //Handle the missing connectors by creating dummy pipes
+
+                Pipe pipe1 = null; Pipe pipe2 = null;
+
+                if (c1 == null)
+                {
+                    pipe1 = ch.CreateDummyPipe(p1, elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint1, elementSymbol);
+                    c1 = ch.MatchConnector(p1, pipe1);
+                }
+
+                if (c2 == null)
+                {
+                    pipe2 = ch.CreateDummyPipe(p2, elementSymbol.CentrePoint.Xyz, elementSymbol.EndPoint2, elementSymbol);
+                    c2 = ch.MatchConnector(p2, pipe2);
+                }
+
+                if (c1 != null && c2 != null)
+                {
+                    Element element = PCFImport.doc.Create.NewTransitionFitting(c1, c2);
+                    if (pipe1 != null) PCFImport.doc.Delete(pipe1.Id);
+                    if (pipe2 != null) PCFImport.doc.Delete(pipe2.Id);
+                    elementSymbol.CreatedElement = element;
+                    PCFImport.doc.Regenerate();
+                    return Result.Succeeded;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            //If this point is reached, something has failed
+            return Result.Failed;
         }
     }
 }

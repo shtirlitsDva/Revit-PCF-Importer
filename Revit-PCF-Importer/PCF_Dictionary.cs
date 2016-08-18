@@ -39,7 +39,8 @@ namespace Revit_PCF_Importer
                 {"TEE", _keywordProcessor.GENERAL},
                 {"CAP", _keywordProcessor.GENERAL},
                 {"FLANGE", _keywordProcessor.FLANGE},
-                {"FLANGE-BLIND", _keywordProcessor.GENERAL}
+                {"FLANGE-BLIND", _keywordProcessor.GENERAL},
+                {"REDUCER-CONCENTRIC", _keywordProcessor.FLANGE}
             };
             return dictionary;
         }
@@ -111,7 +112,8 @@ namespace Revit_PCF_Importer
                 {"TEE", _processElements.TEE},
                 {"CAP", _processElements.CAP},
                 {"FLANGE", _processElements.FLANGE},
-                {"FLANGE-BLIND",_processElements.FLANGE_BLIND}
+                {"FLANGE-BLIND",_processElements.FLANGE_BLIND},
+                {"REDUCER-CONCENTRIC",_processElements.REDUCER_CONCENTRIC}
             };
             return dictionary;
         }
