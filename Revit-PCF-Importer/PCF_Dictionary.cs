@@ -40,7 +40,8 @@ namespace Revit_PCF_Importer
                 {"CAP", _keywordProcessor.GENERAL},
                 {"FLANGE", _keywordProcessor.FLANGE},
                 {"FLANGE-BLIND", _keywordProcessor.GENERAL},
-                {"REDUCER-CONCENTRIC", _keywordProcessor.FLANGE}
+                {"REDUCER-CONCENTRIC", _keywordProcessor.FLANGE},
+                {"OLET", _keywordProcessor.GENERAL}
             };
             return dictionary;
         }
@@ -113,7 +114,8 @@ namespace Revit_PCF_Importer
                 {"CAP", _processElements.CAP},
                 {"FLANGE", _processElements.FLANGE},
                 {"FLANGE-BLIND",_processElements.FLANGE_BLIND},
-                {"REDUCER-CONCENTRIC",_processElements.REDUCER_CONCENTRIC}
+                {"REDUCER-CONCENTRIC",_processElements.REDUCER_CONCENTRIC},
+                {"OLET",_processElements.OLET}
             };
             return dictionary;
         }

@@ -110,7 +110,8 @@ namespace Revit_PCF_Importer
                             !( //Take care! ! operator has lower precedence than ||
                                 string.Equals(es.ElementType, "PIPE") ||
                                 string.Equals(es.ElementType, "CAP") ||
-                                string.Equals(es.ElementType, "FLANGE-BLIND")
+                                string.Equals(es.ElementType, "FLANGE-BLIND") ||
+                                string.Equals(es.ElementType, "OLET")
                                 )
                         select es;
                     //Send elements to creation
@@ -121,13 +122,14 @@ namespace Revit_PCF_Importer
                 {
                     trans2.Start("Create caps");
                     //Filter CAPs 
-                    var capWaveElementsQuery = from ElementSymbol es in ExtractedElementCollection.Elements
+                    var lastWaveElementsQuery = from ElementSymbol es in ExtractedElementCollection.Elements
                         where 
                         string.Equals(es.ElementType, "CAP") ||
-                        string.Equals(es.ElementType, "FLANGE-BLIND")
+                        string.Equals(es.ElementType, "FLANGE-BLIND") ||
+                        string.Equals(es.ElementType, "OLET")
                         select es;
                     //Send CAPs to creation
-                    foreach (ElementSymbol es in capWaveElementsQuery) PcfCreator.SendElementsToCreation(es);
+                    foreach (ElementSymbol es in lastWaveElementsQuery) PcfCreator.SendElementsToCreation(es);
                     trans2.Commit();
                 }
 

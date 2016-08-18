@@ -15,6 +15,7 @@ using BuildingCoder;
 using PCF_Functions;
 using iv = PCF_Functions.InputVars;
 using ch = PCF_Functions.CreatorHelper;
+using pif = Revit_PCF_Importer.PCF_Importer_form;
 
 namespace Revit_PCF_Importer
 {
@@ -34,6 +35,7 @@ namespace Revit_PCF_Importer
         Result FLANGE(ElementSymbol elementSymbol);
         Result FLANGE_BLIND(ElementSymbol elementSymbol);
         Result REDUCER_CONCENTRIC(ElementSymbol elementSymbol);
+        Result OLET(ElementSymbol elementSymbol);
     }
 
     public class ProcessElements : IProcessElements
@@ -617,6 +619,54 @@ namespace Revit_PCF_Importer
                     Element element = PCFImport.doc.Create.NewTransitionFitting(c1, c2);
                     if (pipe1 != null) PCFImport.doc.Delete(pipe1.Id);
                     if (pipe2 != null) PCFImport.doc.Delete(pipe2.Id);
+                    elementSymbol.CreatedElement = element;
+                    PCFImport.doc.Regenerate();
+                    return Result.Succeeded;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            //If this point is reached, something has failed
+            return Result.Failed;
+        }
+
+        public Result OLET(ElementSymbol elementSymbol)
+        {
+            try
+            {
+                //Get all pipe connectors
+                var allConnectors = ch.GetALLConnectors(pif._doc);
+
+                //Determine the branch1point of the olet which is the connection to the olet pipe
+                XYZ bp1 = elementSymbol.Branch1Point.Xyz;
+                XYZ cp = elementSymbol.CentrePoint.Xyz;
+
+                Pipe pipe1 = null;
+                //Pipe pipe2 = null;
+
+                pipe1 = ch.CreateDummyPipe(bp1, elementSymbol.CentrePoint.Xyz, elementSymbol.Branch1Point, elementSymbol);
+                var c1 = ch.MatchConnector(bp1, pipe1);
+
+                ////Determine the corresponding pipe connector to bp1
+                //var c1 = (from Connector c in allConnectors where Util.IsEqual(bp1, c.Origin) select c).FirstOrDefault();
+                ////Get the owner of the connector
+                //var owner = c1.Owner;
+
+                //Find the target pipe
+                var filter = new ElementClassFilter(typeof (Pipe));
+                var view3D = ch.Get3DView(pif._doc);
+                var refIntersect = new ReferenceIntersector(filter, FindReferenceTarget.Element, view3D);
+                ReferenceWithContext rwc = refIntersect.FindNearest(c1.Origin, c1.CoordinateSystem.BasisZ);
+                var refId = rwc.GetReference().ElementId;
+                var pipeToConnectInto = (MEPCurve) pif._doc.GetElement(refId);
+
+                if (c1 != null)
+                {
+                    Element element = PCFImport.doc.Create.NewTakeoffFitting(c1, pipeToConnectInto);
+                    if (pipe1 != null) PCFImport.doc.Delete(pipe1.Id);
+                    //if (pipe2 != null) PCFImport.doc.Delete(pipe2.Id);
                     elementSymbol.CreatedElement = element;
                     PCFImport.doc.Regenerate();
                     return Result.Succeeded;

@@ -215,11 +215,22 @@ namespace Revit_PCF_Importer
 
                 //query the corresponding pipe family and type to add to the element symbol
                 //This is because pipe type is needed to create certain fittings
-                if (es.ElementType != "PIPE")
+                if (es.ElementType != "PIPE" || es.ElementType != "OLET") //Exclude olets -- they are handled next
                 {
                     EnumerableRowCollection<string> queryPipeType = from value in pipesAndFittingsConf.AsEnumerable()
                                                             where value.Field<string>(0) == es.PipelineReference
                                                             select value.Field<string>("PIPE");
+                    string pipeTypeName = queryPipeType.FirstOrDefault();
+                    FilteredElementCollector collectorPipeType = new FilteredElementCollector(PCF_Importer_form._doc);
+                    ElementParameterFilter filterPipeTypeName = Filter.ParameterValueFilter(pipeTypeName, BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
+                    Element pipeType = collectorPipeType.OfClass(typeof(PipeType)).WherePasses(filterPipeTypeName).FirstOrDefault();
+                    es.PipeType = (PipeType)pipeType;
+                }
+                if (es.ElementType == "OLET") //Get the TAP pipetype for olets
+                {
+                    EnumerableRowCollection<string> queryPipeType = from value in pipesAndFittingsConf.AsEnumerable()
+                                                                    where value.Field<string>(0) == "Olet"
+                                                                    select value.Field<string>("PIPE");
                     string pipeTypeName = queryPipeType.FirstOrDefault();
                     FilteredElementCollector collectorPipeType = new FilteredElementCollector(PCF_Importer_form._doc);
                     ElementParameterFilter filterPipeTypeName = Filter.ParameterValueFilter(pipeTypeName, BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
