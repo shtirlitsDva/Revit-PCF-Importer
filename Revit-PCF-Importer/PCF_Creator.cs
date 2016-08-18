@@ -32,6 +32,7 @@ namespace Revit_PCF_Importer
         Result TEE(ElementSymbol elementSymbol);
         Result CAP(ElementSymbol elementSymbol);
         Result FLANGE(ElementSymbol elementSymbol);
+        Result FLANGE_BLIND(ElementSymbol elementSymbol);
     }
 
     public class ProcessElements : IProcessElements
@@ -505,60 +506,79 @@ namespace Revit_PCF_Importer
 
         public Result FLANGE(ElementSymbol elementSymbol)
         {
-            //Place the instance at calculated midpoint
-            Element flange = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, elementSymbol.FamilySymbol, StructuralType.NonStructural);
-
-            //Get all pipe connectors
-            IList<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
-
-            //Get the actual endpoints of the flange
-            XYZ p1 = elementSymbol.EndPoint1.Xyz; XYZ p2 = elementSymbol.EndPoint2.Xyz;
-
-            //Get the flange connectors
-            Connector c1 = ch.GetSecondaryConnector(ch.GetConnectorSet(flange));
-
-            //Determine the corresponding pipe connectors
-            var c2 = (from Connector c in allPipeConnectors where Util.IsEqual(p1, c.Origin) select c).FirstOrDefault();
-
-            Pipe pipe1 = null;
-            if (c2 != null) pipe1 = c2.Owner as Pipe;
-
-            if (c2 == null)
+            try
             {
-                pipe1 = ch.CreateDummyPipe(p1, p2, elementSymbol.EndPoint1, elementSymbol);
-                c2 = ch.MatchConnector(p1, pipe1);
-                elementSymbol.DummyToDelete = pipe1;
+                //Place the instance at calculated midpoint
+                Element flange = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, elementSymbol.FamilySymbol, StructuralType.NonStructural);
+
+                //Get all pipe connectors
+                IList<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
+
+                //Get the actual endpoints of the flange
+                XYZ p1 = elementSymbol.EndPoint1.Xyz; XYZ p2 = elementSymbol.EndPoint2.Xyz;
+
+                //Get the flange connectors
+                Connector c1 = ch.GetSecondaryConnector(ch.GetConnectorSet(flange));
+
+                //Determine the corresponding pipe connectors
+                var c2 = (from Connector c in allPipeConnectors where Util.IsEqual(p1, c.Origin) select c).FirstOrDefault();
+
+                Pipe pipe1 = null;
+                if (c2 != null) pipe1 = c2.Owner as Pipe;
+
+                if (c2 == null)
+                {
+                    pipe1 = ch.CreateDummyPipe(p1, p2, elementSymbol.EndPoint1, elementSymbol);
+                    c2 = ch.MatchConnector(p1, pipe1);
+                    elementSymbol.DummyToDelete = pipe1;
+                }
+
+                #region Geometric manipulation
+                //http://thebuildingcoder.typepad.com/blog/2012/05/create-a-pipe-cap.html
+                Connector flangeConnector = c1;
+                Connector start = c2;
+                XYZ placementPoint = elementSymbol.CentrePoint.Xyz;
+                //Select the OTHER connector
+                MEPCurve hostPipe = start.Owner as MEPCurve;
+                Connector end = (from Connector c in hostPipe.ConnectorManager.Connectors
+                    where (int)c.ConnectorType == 1 && c.Id != start.Id
+                    select c).FirstOrDefault();
+                XYZ dir = (start.Origin - end.Origin).Normalize();
+                XYZ pipeHorizontalDirection = new XYZ(dir.X, dir.Y, 0.0).Normalize(); //Only for horizontal pipes! Fix this if the pipes are in any other direction
+                XYZ connectorDirection = -flangeConnector.CoordinateSystem.BasisZ;
+                double zRotationAngle = pipeHorizontalDirection.AngleTo(connectorDirection);
+                Transform trf = Transform.CreateRotationAtPoint(XYZ.BasisZ, zRotationAngle, start.Origin);
+                XYZ testRotation = trf.OfVector(connectorDirection).Normalize();
+                if (Math.Abs(testRotation.DotProduct(pipeHorizontalDirection) - 1) > 0.00001)
+                    zRotationAngle = -zRotationAngle;
+                Line axis = Line.CreateBound(placementPoint, placementPoint + XYZ.BasisZ); //CREATE BOUND FOR ROTATION FFS!!!! It cost me two days of frustration
+                flange.Location.Rotate(axis, zRotationAngle);
+                #endregion
+
+                Parameter sizeParameter = flange.LookupParameter("Nominal Diameter 1"); //Hardcoded until inmplement
+                sizeParameter.Set(pipe1.Diameter);
+
+                elementSymbol.CreatedElement = flange;
+
+                c1.ConnectTo(c2);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
             }
 
-            #region Geometric manipulation
-            //http://thebuildingcoder.typepad.com/blog/2012/05/create-a-pipe-cap.html
-            Connector flangeConnector = c1;
-            Connector start = c2;
-            XYZ placementPoint = elementSymbol.CentrePoint.Xyz;
-            //Select the OTHER connector
-            MEPCurve hostPipe = start.Owner as MEPCurve;
-            Connector end = (from Connector c in hostPipe.ConnectorManager.Connectors
-                             where (int)c.ConnectorType == 1 && c.Id != start.Id
-                             select c).FirstOrDefault();
-            XYZ dir = (start.Origin - end.Origin).Normalize();
-            XYZ pipeHorizontalDirection = new XYZ(dir.X, dir.Y, 0.0).Normalize(); //Only for horizontal pipes! Fix this if the pipes are in any other direction
-            XYZ connectorDirection = -flangeConnector.CoordinateSystem.BasisZ;
-            double zRotationAngle = pipeHorizontalDirection.AngleTo(connectorDirection);
-            Transform trf = Transform.CreateRotationAtPoint(XYZ.BasisZ, zRotationAngle, start.Origin);
-            XYZ testRotation = trf.OfVector(connectorDirection).Normalize();
-            if (Math.Abs(testRotation.DotProduct(pipeHorizontalDirection) - 1) > 0.00001)
-                zRotationAngle = -zRotationAngle;
-            Line axis = Line.CreateBound(placementPoint, placementPoint + XYZ.BasisZ); //CREATE BOUND FOR ROTATION FFS!!!! It cost me two days of frustration
-            flange.Location.Rotate(axis, zRotationAngle);
-            #endregion
+            return Result.Succeeded;
+        }
 
-            Parameter sizeParameter = flange.LookupParameter("Nominal Diameter 1"); //Hardcoded until inmplement
-            sizeParameter.Set(pipe1.Diameter);
+        public Result FLANGE_BLIND(ElementSymbol elementSymbol)
+        {
+            //Flange blind is suspended until after accessories are implemented
+            //Because it attaches mostly to accessories in my model
+            //Because of this it fails to find the placement point because accessories do not yet exist
 
-            elementSymbol.CreatedElement = flange;
-
-            c1.ConnectTo(c2);
-
+            ////CAP can be reused
+            //Result result = CAP(elementSymbol);
+            //return result;
             return Result.Succeeded;
         }
     }

@@ -38,7 +38,8 @@ namespace Revit_PCF_Importer
                 {"ELBOW", _keywordProcessor.GENERAL},
                 {"TEE", _keywordProcessor.GENERAL},
                 {"CAP", _keywordProcessor.GENERAL},
-                {"FLANGE", _keywordProcessor.FLANGE}
+                {"FLANGE", _keywordProcessor.FLANGE},
+                {"FLANGE-BLIND", _keywordProcessor.GENERAL}
             };
             return dictionary;
         }
@@ -109,7 +110,8 @@ namespace Revit_PCF_Importer
                 {"ELBOW", _processElements.ELBOW },
                 {"TEE", _processElements.TEE},
                 {"CAP", _processElements.CAP},
-                {"FLANGE", _processElements.FLANGE}
+                {"FLANGE", _processElements.FLANGE},
+                {"FLANGE-BLIND",_processElements.FLANGE_BLIND}
             };
             return dictionary;
         }
