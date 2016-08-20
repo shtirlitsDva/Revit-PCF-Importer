@@ -42,7 +42,7 @@ namespace Revit_PCF_Importer
     {
         public string Keyword { get; set; } //Contains the keyword for the pointInSpace
         public XYZ Xyz { get; set; } = null;
-        public double Diameter { get; set; } = new double();
+        public double Diameter { get; set; } = 0;
         public string RestOfTheLine { get; set; } = string.Empty;
         public bool Initialized { get; set; } = false;
 

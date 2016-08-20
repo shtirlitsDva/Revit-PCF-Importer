@@ -20,7 +20,7 @@ namespace Revit_PCF_Importer
     {
         #region Export configuration
         public static IEnumerable<IGrouping<string, IGrouping<string, ElementSymbol>>>
-            GroupSymbols(IList<ElementSymbol> symbolList)
+            GroupSymbolsByPipelineThenType(IList<ElementSymbol> symbolList)
         {
             //Nested groupings: https://msdn.microsoft.com/da-dk/library/bb545974.aspx
             //Group all elementSymbols by pipeline and element type
@@ -31,6 +31,48 @@ namespace Revit_PCF_Importer
                     (from ElementSymbol es in pipeLineGroup
                         group es by es.ElementType)
                 group elementTypeGroup by pipeLineGroup.Key;
+
+            return grouped;
+        }
+
+        public static IEnumerable<IGrouping<string, IGrouping<string, ElementSymbol>>> GroupSymbolsByTypeThenSkey(
+            IList<ElementSymbol> symbolList)
+        {
+            var grouped = from ElementSymbol es in symbolList
+                where !(
+                    string.Equals(es.PipelineReference, "PRE-PIPELINE") ||
+                    string.Equals(es.PipelineReference, "MATERIALS")
+                    )
+                group es by es.ElementType
+                into typeGroup
+                from skeyGroup in
+                    (from ElementSymbol es in typeGroup
+                        group es by es.Skey)
+                group skeyGroup by typeGroup.Key;
+
+            return grouped;
+        }
+
+        public static IEnumerable<IGrouping<double, PointInSpace>> GroupEndPointsByDiameter(IList<ElementSymbol> symbolList)
+        {
+            var elementSymbols = from ElementSymbol es in symbolList
+                where !(
+                    string.Equals(es.PipelineReference, "PRE-PIPELINE") ||
+                    string.Equals(es.PipelineReference, "MATERIALS")
+                    )
+                select es;
+
+            IList<PointInSpace> allPointsInSpace = new List<PointInSpace>();
+            foreach (ElementSymbol es in elementSymbols)
+            {
+                if (es.EndPoint1.Diameter != 0) allPointsInSpace.Add(es.EndPoint1);
+                if (es.EndPoint2.Diameter != 0) allPointsInSpace.Add(es.EndPoint2);
+                if (es.CentrePoint.Diameter != 0) allPointsInSpace.Add(es.CentrePoint);
+                if (es.CoOrds.Diameter != 0) allPointsInSpace.Add(es.CoOrds);
+                if (es.Branch1Point.Diameter != 0) allPointsInSpace.Add(es.Branch1Point);
+            }
+
+            var grouped = from PointInSpace pis in allPointsInSpace group pis by pis.Diameter;
 
             return grouped;
         }
