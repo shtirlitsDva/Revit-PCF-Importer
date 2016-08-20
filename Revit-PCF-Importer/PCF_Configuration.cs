@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
@@ -12,6 +13,7 @@ using Autodesk.Revit.UI;
 using BuildingCoder;
 using PCF_Functions;
 using xel = Microsoft.Office.Interop.Excel;
+using iv = PCF_Functions.InputVars;
 
 
 namespace Revit_PCF_Importer
@@ -53,7 +55,7 @@ namespace Revit_PCF_Importer
             return grouped;
         }
 
-        public static IEnumerable<IGrouping<double, PointInSpace>> GroupEndPointsByDiameter(IList<ElementSymbol> symbolList)
+        public static IEnumerable<IGrouping<string, PointInSpace>> GroupEndPointsByDiameter(IList<ElementSymbol> symbolList)
         {
             var elementSymbols = from ElementSymbol es in symbolList
                 where !(
@@ -72,8 +74,13 @@ namespace Revit_PCF_Importer
                 if (es.Branch1Point.Diameter != 0) allPointsInSpace.Add(es.Branch1Point);
             }
 
-            var grouped = from PointInSpace pis in allPointsInSpace group pis by pis.Diameter;
+            IList<PointInSpace> orderedList = allPointsInSpace.OrderBy(pis => pis.Diameter).ToList();
 
+            IEnumerable<IGrouping<string, PointInSpace>> grouped;
+
+            if (iv.UNITS_BORE_MM) grouped = from PointInSpace pis in orderedList group pis by Conversion.PipeSizeToMm(pis.Diameter/2);
+            else grouped = from PointInSpace pis in orderedList group pis by Conversion.PipeSizeToInch(pis.Diameter/2);
+            
             return grouped;
         }
 
@@ -103,13 +110,12 @@ namespace Revit_PCF_Importer
             return grouped;
         }
 
-        public static void ExportPipelinesElementsToExcel(IList<ElementSymbol> sourceList) 
-            
+        public static void ExportPipelinesElementsToExcel(IList<ElementSymbol> sourceList)
         {
             //Grouped in pipelines
-            var pipelineGroups = GroupByPipeline(sourceList);
+            var typeAndSkeyGroups = GroupSymbolsByTypeThenSkey(sourceList);
             //Grouped in element types
-            var typeGroups = GroupByElementType(sourceList);
+            var diameterGroups = GroupEndPointsByDiameter(sourceList);
 
             xel.Application excel = new xel.Application();
             if (null == excel)
@@ -121,46 +127,34 @@ namespace Revit_PCF_Importer
             xel.Workbook workbook = excel.Workbooks.Add(Missing.Value);
             xel.Worksheet worksheet;
             worksheet = excel.ActiveSheet as xel.Worksheet; //New worksheet
-            worksheet.Name = "Pipes and fittings"; //Name the created worksheet
+            worksheet.Name = "All pipelines"; //Name the created worksheet
 
             worksheet.Columns.ColumnWidth = 20;
-            worksheet.Cells[1, 1] = "PIPELINE-REFERENCE"; //First column header
-            //worksheet.Cells[1, 2] = "PCF Keyword ->"; //Second column header
-            worksheet.Range["A1", Util.GetColumnName(typeGroups.Count()+1) + "1"].Font.Bold = true;
-
-            //List of items that are handled by the PipeType and not instance placing
-            //Remember to update this list!!!
-            IList<string> typesHandledByPipeType = new List<string>();
-            typesHandledByPipeType.Add("ELBOW");
-            typesHandledByPipeType.Add("TEE");
-            typesHandledByPipeType.Add("REDUCER-CONCENTRIC");
-            typesHandledByPipeType.Add("REDUCER-ECCENTRIC");
-
-            
+            worksheet.Cells[1, 1] = "Type and skey"; //First column header
+            worksheet.Cells[1, 2] = "All sizes"; //Second column header
+            worksheet.Range["A1", Util.GetColumnName(diameterGroups.Count()+2) + "1"].Font.Bold = true;
 
             //Export the PCF keywords
-            int row = 1, col = 1;
+            int row = 1, col = 2;
 
-            //Iterate pipline references
-            foreach (IGrouping<string, ElementSymbol> pipeLine in pipelineGroups)
+            //Write diameters
+            foreach (var diameter in diameterGroups)
             {
                 //Write the pipeline values to EXCEL
-                row++; //Increment row
-                //worksheet.Cells[row, 1] = "PIPELINE-REFERENCE";
-                worksheet.Cells[row, 1] = pipeLine.Key;
-                worksheet.Range["A" + row, "A" + row].Font.Bold = true; //Make pipelines bold
+                col++;
+                worksheet.Cells[1, col] = diameter.Key;
             }
-            //Write the top level keywords
-            foreach (IGrouping<string, ElementSymbol> type in typeGroups)
+            //Write elements and skeys
+            foreach (var type in typeAndSkeyGroups)
             {
-                col++; //Increment col
-                worksheet.Cells[1, col] = type.Key;
-                if (MyExtensions.ContainsString(typesHandledByPipeType, type.Key))
+                row++;
+                worksheet.Cells[row, 1] = type.Key;
+                worksheet.Range["A" + row, "A" + row].Font.Bold = true;
+                foreach (var skey in type)
                 {
-                    for (row = 2; row <= pipelineGroups.Count()+1; row++ )
-                    {
-                        worksheet.Cells[row, col] = "Handled by PipeType";
-                    }
+                    if (!skey.Key.IsNullOrEmpty()) continue; //<--- Why does ! make it work???
+                    row++;
+                    worksheet.Cells[row, 1] = skey.Key;
                 }
             }
         }

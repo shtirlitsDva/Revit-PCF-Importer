@@ -57,7 +57,8 @@ namespace Revit_PCF_Importer
                 {"MATERIAL-IDENTIFIER", _keywordProcessor.MATERIAL_IDENTIFIER },
                 {"DESCRIPTION", _keywordProcessor.DESCRIPTION },
                 {"UCI", _keywordProcessor.UCI },
-                {"UNIQUE-COMPONENT-IDENTIFIER", _keywordProcessor.UCI }
+                {"UNIQUE-COMPONENT-IDENTIFIER", _keywordProcessor.UCI},
+                {"SKEY", _keywordProcessor.SKEY}
             };
             return dictionary;
         }

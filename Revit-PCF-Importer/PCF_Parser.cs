@@ -43,6 +43,7 @@ namespace Revit_PCF_Importer
         Result MATERIAL_IDENTIFIER(ElementSymbol elementSymbol, string line);
         Result DESCRIPTION(ElementSymbol elementSymbol, string line);
         Result UCI(ElementSymbol elementSymbol, string line);
+        Result SKEY(ElementSymbol elementSymbol, string line);
     }
 
     public class KeywordProcessor : IKeywordProcessor
@@ -254,6 +255,14 @@ namespace Revit_PCF_Importer
             //elementSymbol.guid = guid;
             return Result.Succeeded;
         }
+
+        public Result SKEY(ElementSymbol elementSymbol, string line)
+        {
+            string skey = Parser.GetRestOfTheLine(line);
+            elementSymbol.Skey = skey;
+            return Result.Succeeded;
+        }
+
         #endregion
     }
 
