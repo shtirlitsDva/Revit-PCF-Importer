@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Text;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -62,6 +63,18 @@ namespace Revit_PCF_Importer
                 textBox1.Text = _pcfPath;
                 //Set the PCF file path setting
                 mySettings.Default.pcfPath = _pcfPath;
+                //Read the file, get amount of pipelines and display the number
+                FileReader fileReader = new FileReader();
+                string[] readFile = fileReader.ReadFile(mySettings.Default.pcfPath);
+                //This method collects all top-level element strings and creates ElementSymbols with data
+                ElementCollection elements = new ElementCollection();
+                Parser.CreateInitialElementList(elements, readFile);
+
+                int numberOfPipelines =
+                    (from ElementSymbol es in elements.Elements where es.ElementType == "PIPELINE-REFERENCE" select es)
+                        .Count();
+
+                textBox3.Text = numberOfPipelines.ToString();
             }
         }
 
@@ -106,6 +119,16 @@ namespace Revit_PCF_Importer
             }
 
             PCF_Configuration.ExportPipelinesElementsToExcel(ExtractedElementCollection.Elements);
+        }
+
+        private void radioButton1_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void radioButton2_CheckedChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

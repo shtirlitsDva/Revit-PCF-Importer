@@ -43,7 +43,8 @@ namespace Revit_PCF_Importer
             var grouped = from ElementSymbol es in symbolList
                 where !(
                     string.Equals(es.PipelineReference, "PRE-PIPELINE") ||
-                    string.Equals(es.PipelineReference, "MATERIALS")
+                    string.Equals(es.PipelineReference, "MATERIALS") ||
+                    string.Equals(es.ElementType, "PIPELINE-REFERENCE")
                     )
                 group es by es.ElementType
                 into typeGroup
@@ -60,7 +61,8 @@ namespace Revit_PCF_Importer
             var elementSymbols = from ElementSymbol es in symbolList
                 where !(
                     string.Equals(es.PipelineReference, "PRE-PIPELINE") ||
-                    string.Equals(es.PipelineReference, "MATERIALS")
+                    string.Equals(es.PipelineReference, "MATERIALS") ||
+                    string.Equals(es.ElementType, "PIPELINE-REFERENCE")
                     )
                 select es;
 
@@ -73,7 +75,7 @@ namespace Revit_PCF_Importer
                 if (es.CoOrds.Diameter != 0) allPointsInSpace.Add(es.CoOrds);
                 if (es.Branch1Point.Diameter != 0) allPointsInSpace.Add(es.Branch1Point);
             }
-
+            //Order list to make the diameters appear in order from small to large
             IList<PointInSpace> orderedList = allPointsInSpace.OrderBy(pis => pis.Diameter).ToList();
 
             IEnumerable<IGrouping<string, PointInSpace>> grouped;
