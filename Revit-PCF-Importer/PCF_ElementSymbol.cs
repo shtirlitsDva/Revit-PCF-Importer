@@ -15,6 +15,7 @@ namespace Revit_PCF_Importer
         public string ElementType { get; set; } //The element type.
         public StringCollection SourceData { get; set; } = new StringCollection();//This contains the raw data read from file
         public string PipelineReference { get; set; } = "PRE-PIPELINE"; //This contains the pipeline reference that was read
+        public string Skey { get; set; } = string.Empty; //This contains the element SKEY from source
         public PipingSystemType PipingSystemType { get; set; } //Holds the PipeLineType for the element
         public FamilySymbol FamilySymbol { get; set; } //Holds the family symbol if appropriate
         public PipeType PipeType { get; set; } //Holds the pipe type if appropriate
