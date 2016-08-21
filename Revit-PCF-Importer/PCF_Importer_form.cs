@@ -134,15 +134,20 @@ namespace Revit_PCF_Importer
                 PcfDict.ProcessTopLevelKeywords(elementSymbol);
             }
 
-            IList<ElementSymbol> elementList = ExtractedElementCollection.Elements; //Make a list because the source has a very long name
+            IList<ElementSymbol> elementList = (from ElementSymbol es in ExtractedElementCollection.Elements
+                                               where !(
+                                               string.Equals(es.PipelineReference, "PRE-PIPELINE") ||
+                                               string.Equals(es.PipelineReference, "MATERIALS")
+                                               )
+                                               select es).ToList();
 
             if (iv.ConfigureAll == true)
             {
-                PCF_Configuration.ExportPipelinesElementsToExcel(elementList);
+                PCF_Configuration.ExportAllConfigurationToExcel(elementList);
             }
             else
             {
-                
+                PCF_Configuration.ExportByPipelineConfigurationToExcel(elementList);
             }
         }
 
