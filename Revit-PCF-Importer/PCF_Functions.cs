@@ -30,7 +30,7 @@ namespace PCF_Functions
         public static string ExcelSheet = "COMP";
 
         //Execution control
-        public static bool ExportAll = true;
+        public static bool ConfigureAll = true;
         public static double DiameterLimit = 0;
 
         //PCF File Header (preamble) control
@@ -61,17 +61,6 @@ namespace PCF_Functions
         public static string PipelineGroupParameterName = "System Abbreviation";
 
         #endregion Filters
-
-        #region Element parameter definition
-
-        //Shared parameter group
-        //public const string PCF_GROUP_NAME = "PCF"; OBSOLETE
-        public const BuiltInParameterGroup PCF_BUILTIN_GROUP_NAME = BuiltInParameterGroup.PG_ANALYTICAL_MODEL;
-
-        //PCF specification - OBSOLETE
-        //public static string PIPING_SPEC = "STD";
-
-        #endregion
     }
 
     public class Composer

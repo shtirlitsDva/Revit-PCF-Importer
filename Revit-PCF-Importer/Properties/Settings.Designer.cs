@@ -46,5 +46,29 @@ namespace Revit_PCF_Importer.Properties {
                 this["pcfPath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int numberOfPipelinesDetected {
+            get {
+                return ((int)(this["numberOfPipelinesDetected"]));
+            }
+            set {
+                this["numberOfPipelinesDetected"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool configureAll {
+            get {
+                return ((bool)(this["configureAll"]));
+            }
+            set {
+                this["configureAll"] = value;
+            }
+        }
     }
 }

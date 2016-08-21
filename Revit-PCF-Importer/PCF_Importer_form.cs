@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -49,6 +50,20 @@ namespace Revit_PCF_Importer
             //Init textboxes
             textBox1.Text = _pcfPath;
             textBox2.Text = _excelPath;
+            textBox3.Text = mySettings.Default.numberOfPipelinesDetected.ToString();
+
+            //Init radiobuttons
+            iv.ConfigureAll = mySettings.Default.configureAll;
+            if (iv.ConfigureAll)
+            {
+                radioButton1.Checked = true;
+                radioButton2.Checked = false;
+            }
+            else
+            {
+                radioButton1.Checked = false;
+                radioButton2.Checked = true;
+            }
 
             PcfDict = new PCF_Dictionary(new KeywordProcessor());
             PcfCreator = new PCF_Creator(new ProcessElements());
@@ -75,6 +90,7 @@ namespace Revit_PCF_Importer
                         .Count();
 
                 textBox3.Text = numberOfPipelines.ToString();
+                mySettings.Default.numberOfPipelinesDetected = numberOfPipelines;
             }
         }
 
@@ -118,17 +134,34 @@ namespace Revit_PCF_Importer
                 PcfDict.ProcessTopLevelKeywords(elementSymbol);
             }
 
-            PCF_Configuration.ExportPipelinesElementsToExcel(ExtractedElementCollection.Elements);
+            IList<ElementSymbol> elementList = ExtractedElementCollection.Elements; //Make a list because the source has a very long name
+
+            if (iv.ConfigureAll == true)
+            {
+                PCF_Configuration.ExportPipelinesElementsToExcel(elementList);
+            }
+            else
+            {
+                
+            }
         }
 
         private void radioButton1_CheckedChanged(object sender, EventArgs e)
         {
-
+            if (radioButton1.Checked)
+            {
+                iv.ConfigureAll = true;
+                mySettings.Default.configureAll = true;
+            }
         }
 
         private void radioButton2_CheckedChanged(object sender, EventArgs e)
         {
-
+            if (radioButton2.Checked)
+            {
+                iv.ConfigureAll = false;
+                mySettings.Default.configureAll = false;
+            }
         }
     }
 }
