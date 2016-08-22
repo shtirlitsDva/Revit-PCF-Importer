@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -163,68 +164,102 @@ namespace Revit_PCF_Importer
 
         public static void ExportByPipelineConfigurationToExcel(IList<ElementSymbol> sourceList)
         {
-            var pipelineRefs =
-                    (from ElementSymbol es in sourceList where es.ElementType == "PIPELINE-REFERENCE" select es);
-
-            IList<string> pipelineNames = pipelineRefs.Select(es => es.PipelineReference).ToList();
-
-            //http://stackoverflow.com/a/6133139/6073998 triple nested linq
-            var grouped = from ElementSymbol es in sourceList
-                group es by new {es.PipelineReference, es.ElementType, es.Skey}
-                into g2
-                group g2 by new {g2.Key.PipelineReference, g2.Key.ElementType}
-                into g1
-                group g1 by g1.Key.PipelineReference;
-
-
-
-
-            //Grouped in pipelines
-            var typeAndSkeyGroups = GroupSymbolsByTypeThenSkey(sourceList);
-            //Grouped in element types
-            var diameterGroups = GroupEndPointsByDiameter(sourceList);
-
-            xel.Application excel = new xel.Application();
-            if (null == excel)
+            try
             {
-                Util.ErrorMsg("Failed to get or start Excel.");
-            }
-            excel.Visible = true;
+                //Group pipeline elements by pipeline ref, type and skey
+                //http://stackoverflow.com/a/6133139/6073998 triple nested linq
+                var grouped = from ElementSymbol es in sourceList
+                    where !string.Equals(es.ElementType, "PIPELINE-REFERENCE")
+                    group es by new {es.PipelineReference, es.ElementType, es.Skey}
+                    into g2
+                    group g2 by new {g2.Key.PipelineReference, g2.Key.ElementType}
+                    into g1
+                    group g1 by g1.Key.PipelineReference;
 
-            xel.Workbook workbook = excel.Workbooks.Add(Missing.Value);
-            xel.Worksheet worksheet;
-            worksheet = excel.ActiveSheet as xel.Worksheet; //New worksheet
-            worksheet.Name = "All pipelines"; //Name the created worksheet
-
-            worksheet.Columns.ColumnWidth = 20;
-            worksheet.Cells[1, 1] = "Type and skey"; //First column header
-            worksheet.Cells[1, 2] = "All sizes"; //Second column header
-            worksheet.Range["A1", Util.GetColumnName(diameterGroups.Count() + 2) + "1"].Font.Bold = true;
-
-            //Export the PCF keywords
-            int row = 1, col = 2;
-
-            //Write diameters
-            foreach (var diameter in diameterGroups)
-            {
-                //Write the pipeline values to EXCEL
-                col++;
-                worksheet.Cells[1, col] = diameter.Key;
-            }
-            //Write elements and skeys
-            foreach (var type in typeAndSkeyGroups)
-            {
-                row++;
-                worksheet.Cells[row, 1] = type.Key;
-                worksheet.Range["A" + row, "A" + row].Font.Bold = true;
-                foreach (var skey in type)
+                //Init excel instance and create a workbook
+                xel.Application excel = new xel.Application();
+                if (null == excel)
                 {
-                    if (!skey.Key.IsNullOrEmpty()) continue; //<--- Why does ! make it work???
-                    row++;
-                    worksheet.Cells[row, 1] = skey.Key;
+                    Util.ErrorMsg("Failed to get or start EXCEL.");
+                    throw new Exception("Failed to get or start EXCEL");
+                }
+                excel.Visible = true;
+
+                xel.Workbook workbook = excel.Workbooks.Add(Missing.Value);
+                xel.Worksheet worksheet;
+
+                //To create distinction between first iteration and others
+                bool first = true;
+
+                //Iterate groups and write out the data
+                foreach (var pipeline in grouped)
+                {
+                    string pipelineRef = pipeline.Key;
+                    if (first)
+                    {
+                        worksheet = excel.ActiveSheet as xel.Worksheet; //select default worksheet
+                        worksheet.Name = pipelineRef; //Name the created worksheet
+
+                        worksheet.Columns.ColumnWidth = 20;
+                        worksheet.Cells[1, 1] = "Type and skey"; //First column header
+                        worksheet.Cells[1, 2] = "All sizes"; //Second column header
+                        first = false;
+                    }
+                    else
+                    {
+                        excel.Sheets.Add(Missing.Value, Missing.Value, Missing.Value, Missing.Value);
+                        worksheet = excel.ActiveSheet as xel.Worksheet;
+                        worksheet.Name = pipelineRef;
+
+                        worksheet.Columns.ColumnWidth = 20;
+                        worksheet.Cells[1, 1] = "Type and skey"; //First column header
+                        worksheet.Cells[1, 2] = "All sizes"; //Second column header
+                    }
+
+                    //Manage the diameter grouping
+                    var pipelineElements = (from ElementSymbol es in sourceList
+                        where (
+                            !string.Equals(es.ElementType, "PIPELINE-REFERENCE") &&
+                            string.Equals(es.PipelineReference, pipelineRef)
+                            )
+                        select es).ToList();
+
+                    var diameterGroups = GroupEndPointsByDiameter(pipelineElements);
+                    //Make the top row bold now that we know number of sizes
+                    worksheet.Range["A1", Util.GetColumnName(diameterGroups.Count() + 2) + "1"].Font.Bold = true;
+
+                    //Export the PCF keywords
+                    int row = 1, col = 2;
+
+                    //Write diameters
+                    foreach (var diameter in diameterGroups)
+                    {
+                        //Write the pipeline values to EXCEL
+                        col++;
+                        worksheet.Cells[1, col] = diameter.Key;
+                    }
+                    //Write elements and skeys
+                    foreach (var type in pipeline)
+                    {
+                        row++;
+                        worksheet.Cells[row, 1] = type.Key.ElementType;
+                        worksheet.Range["A" + row, "A" + row].Font.Bold = true;
+                        foreach (var skey in type)
+                        {
+                            if (!skey.Key.Skey.IsNullOrEmpty()) continue; //<--- Why does ! make it work???
+                            row++;
+                            worksheet.Cells[row, 1] = skey.Key.Skey;
+                        }
+                    }
                 }
             }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw new Exception(e.Message);
+            }
         }
+
         #endregion
 
         #region Import configuration
