@@ -287,7 +287,7 @@ namespace Revit_PCF_Importer
                     adapter.Fill(dataTable);
 
                     //Remove ' and $ from sheetName
-                    Regex rgx = new Regex("[^a-zA-Z0-9 -]");
+                    Regex rgx = new Regex("[^a-zA-Z0-9 _-]");
                     string tableName = rgx.Replace(sheetName, "");
 
                     dataTable.TableName = tableName;
@@ -314,7 +314,7 @@ namespace Revit_PCF_Importer
                 return null;
             }
 
-            String[] excelSheetNames = new String[dt.Rows.Count];
+            string[] excelSheetNames = new string[dt.Rows.Count];
             int i = 0;
 
             foreach (DataRow row in dt.Rows)
@@ -331,15 +331,24 @@ namespace Revit_PCF_Importer
             try
             {
                 DataTableCollection dataTables = dataSet.Tables;
+                DataTable dataTable;
 
-                //Pipes and Fittings
-                var pipesAndFittingsConf =
-                    (from DataTable dataTable in dataTables
-                        where string.Equals(dataTable.TableName, "Pipes and fittings")
-                        select dataTable).FirstOrDefault();
+                //Handle all pipelines or separate configuration setting
+                if (iv.ConfigureAll)
+                {
+                    dataTable = (from DataTable dt in dataTables
+                                 where string.Equals(dt.TableName, "All pipelines")
+                                 select dt).FirstOrDefault();
+                }
+                else
+                {
+                    dataTable = (from DataTable dt in dataTables
+                                 where string.Equals(dt.TableName, es.PipelineReference)
+                                 select dt).FirstOrDefault();
+                }
 
                 //query the element family and type is using the variables in the loop to query the dataset
-                EnumerableRowCollection<string> query = from value in pipesAndFittingsConf.AsEnumerable()
+                EnumerableRowCollection<string> query = from value in dataTable.AsEnumerable()
                     where value.Field<string>(0) == es.PipelineReference
                     select value.Field<string>(es.ElementType);
                 string familyAndType = query.FirstOrDefault().ToString();
@@ -355,7 +364,7 @@ namespace Revit_PCF_Importer
                 //This is because pipe type is needed to create certain fittings
                 if (es.ElementType != "PIPE" || es.ElementType != "OLET") //Exclude olets -- they are handled next
                 {
-                    EnumerableRowCollection<string> queryPipeType = from value in pipesAndFittingsConf.AsEnumerable()
+                    EnumerableRowCollection<string> queryPipeType = from value in dataTable.AsEnumerable()
                                                             where value.Field<string>(0) == es.PipelineReference
                                                             select value.Field<string>("PIPE");
                     string pipeTypeName = queryPipeType.FirstOrDefault();
@@ -366,7 +375,7 @@ namespace Revit_PCF_Importer
                 }
                 if (es.ElementType == "OLET") //Get the TAP pipetype for olets
                 {
-                    EnumerableRowCollection<string> queryPipeType = from value in pipesAndFittingsConf.AsEnumerable()
+                    EnumerableRowCollection<string> queryPipeType = from value in dataTable.AsEnumerable()
                                                                     where value.Field<string>(0) == "Olet"
                                                                     select value.Field<string>("PIPE");
                     string pipeTypeName = queryPipeType.FirstOrDefault();
