@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Data;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
+using MoreLinq;
 using System.Text;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -566,13 +568,7 @@ namespace PCF_Functions
 
                     ElementParameterFilter filter = Filter.ParameterValueFilter(curPipelineReference, BuiltInParameter.RBS_SYSTEM_ABBREVIATION_PARAM);
                     //Get the elements
-                    collector.OfClass(typeof (PipingSystemType)).WherePasses(filter);
-                        //Just to try something fun, if not working -- dispose
-                    //Select correct systemType
-                    //PipingSystemType sQuery = (from PipingSystemType st in collector
-                    //                           where string.Equals(st.Abbreviation, curPipelineReference)
-                    //                           select st).FirstOrDefault();
-                    PipingSystemType sQuery = (PipingSystemType) collector.FirstElement();
+                    PipingSystemType sQuery = collector.OfClass(typeof (PipingSystemType)).WherePasses(filter).Cast<PipingSystemType>().FirstOrDefault();
 
                     if (sQuery != null) CurElementSymbol.PipingSystemType = sQuery;
 
@@ -824,22 +820,20 @@ namespace PCF_Functions
             return connectors;
         }
 
-        public static IList<Connector> GetAllPipeConnectors()
+        public static HashSet<Connector> GetAllPipeConnectors()
         {
             //Get a list of all pipes created in project
             //Consider adding a filter to only work on pipes in the same pipeline
-            List<MEPCurve> query = (from ElementSymbol es in PCFImport.ExtractedElementCollection.Elements
-                                    where string.Equals("PIPE", es.ElementType)
-                                    select (MEPCurve)es.CreatedElement).ToList();
-            //Remove all null items from list
-            //query.RemoveAll(item => item == null);
+            HashSet<MEPCurve> query = (from ElementSymbol es in PCFImport.ExtractedElementCollection.Elements
+                                    where string.Equals("PIPE", es.ElementType) && es.CreatedElement != null //Make sure no null elements are passed around, sigh....
+                                    select (MEPCurve)es.CreatedElement).ToHashSet();
 
             //Collect all pipe connectors present im project while filtering for end connector types
-            IList<Connector> allPipeConnectors = query
+            HashSet<Connector> allPipeConnectors = query
                 .Select(mepCurve => mepCurve.ConnectorManager.Connectors)
                 .SelectMany(conSet => (from Connector c in conSet
                                        where (int)c.ConnectorType == 1
-                                       select c)).ToList();
+                                       select c)).ToHashSet();
             return allPipeConnectors;
         }
 

@@ -28,12 +28,21 @@ namespace BuildingCoder
         #region Geometrical Comparison
         //const double _eps = 1.0e-9; //Original tolerance
         const double _eps = 0.00328; //Tolerance equal to 1 mm
+        const double _minPipeLength = 0.00656167979; //Equal to two mm
 
         public static double Eps
         {
             get
             {
                 return _eps;
+            }
+        }
+
+        public static double MinPipeLength
+        {
+            get
+            {
+                return _minPipeLength;
             }
         }
 
@@ -231,6 +240,16 @@ namespace BuildingCoder
         #endregion // Geometrical Comparison
 
         #region Geometrical Calculation
+
+        /// <summary>
+        /// Return distance between two points.
+        /// </summary>
+
+        public static double Distance(XYZ p, XYZ q)
+        {
+            return Math.Sqrt((q.X - p.X) * (q.X - p.X) + (q.Y - p.Y) * (q.Y - p.Y) + (q.Z - p.Z) * (q.Z - p.Z));
+        }
+
         /// <summary>
         /// Return the midpoint between two points.
         /// </summary>

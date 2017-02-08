@@ -58,6 +58,9 @@ namespace Revit_PCF_Importer
                 ElementClassFilter levelFilter = new ElementClassFilter(typeof(Level));
                 ElementId levelId = collector.WherePasses(levelFilter).FirstElementId();
 
+                //Test if pipe shorter than 2 mm, if true abort the creation
+                if (Util.MinPipeLength > Util.Distance(elementSymbol.EndPoint1.Xyz, elementSymbol.EndPoint2.Xyz)) return Result.Failed;
+
                 //Create pipe
                 Pipe pipe = Pipe.Create(PCFImport.doc, elementSymbol.PipingSystemType.Id, pipeTypeId, levelId,
                     elementSymbol.EndPoint1.Xyz, elementSymbol.EndPoint2.Xyz);
@@ -161,7 +164,7 @@ namespace Revit_PCF_Importer
 
                 #region Create by NewElbowFitting
                 //Get all pipe connectors
-                IList<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
+                HashSet<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
 
                 //Get the actual endpoints of the elbow
                 XYZ p1 = elementSymbol.EndPoint1.Xyz; XYZ p2 = elementSymbol.EndPoint2.Xyz;
@@ -297,7 +300,7 @@ namespace Revit_PCF_Importer
                 #endregion
 
                 //Get all pipe connectors
-                IList<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
+                HashSet<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
 
                 //Get the actual endpoints of the elbow
                 XYZ p1 = elementSymbol.EndPoint1.Xyz; XYZ p2 = elementSymbol.EndPoint2.Xyz; XYZ p3 = elementSymbol.Branch1Point.Xyz;
@@ -422,7 +425,7 @@ namespace Revit_PCF_Importer
                 Pipe pipe1 = null;
 
                 //Get all pipe connectors
-                IList<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
+                HashSet<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
 
                 //Determine the corresponding pipe connectors
                 Connector c2 =
@@ -515,7 +518,7 @@ namespace Revit_PCF_Importer
                 Element flange = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, elementSymbol.FamilySymbol, StructuralType.NonStructural);
 
                 //Get all pipe connectors
-                IList<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
+                HashSet<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
 
                 //Get the actual endpoints of the flange
                 XYZ p1 = elementSymbol.EndPoint1.Xyz; XYZ p2 = elementSymbol.EndPoint2.Xyz;
@@ -590,7 +593,7 @@ namespace Revit_PCF_Importer
             try
             {
                 //Get all pipe connectors
-                IList<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
+                HashSet<Connector> allPipeConnectors = ch.GetAllPipeConnectors();
 
                 //Get the actual endpoints of the elbow
                 XYZ p1 = elementSymbol.EndPoint1.Xyz; XYZ p2 = elementSymbol.EndPoint2.Xyz;
