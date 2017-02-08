@@ -22,7 +22,7 @@ namespace Revit_PCF_Importer
     public interface ICreateElements
     {
         Result SendElementsToCreation(ElementSymbol elementSymbol);
-        }
+    }
 
     public interface IProcessElements
     {
@@ -36,6 +36,7 @@ namespace Revit_PCF_Importer
         Result FLANGE_BLIND(ElementSymbol elementSymbol);
         Result REDUCER_CONCENTRIC(ElementSymbol elementSymbol);
         Result OLET(ElementSymbol elementSymbol);
+        Result VALVE(ElementSymbol elementSymbol);
     }
 
     public class ProcessElements : IProcessElements
@@ -70,7 +71,7 @@ namespace Revit_PCF_Importer
                 parameter.Set(elementSymbol.EndPoint1.Diameter);
 
                 //Store the reference for the created element in the ElementSymbol
-                elementSymbol.CreatedElement = (Element) pipe;
+                elementSymbol.CreatedElement = (Element)pipe;
                 return Result.Succeeded;
             }
             catch (Exception e)
@@ -171,9 +172,9 @@ namespace Revit_PCF_Importer
                 //Determine the corresponding pipe connectors
                 var c1 = (from Connector c in allPipeConnectors where Util.IsEqual(p1, c.Origin) select c).FirstOrDefault();
                 var c2 = (from Connector c in allPipeConnectors where Util.IsEqual(p2, c.Origin) select c).FirstOrDefault();
-                
+
                 //Handle the missing connectors by creating dummy pipes
-                
+
                 Pipe pipe1 = null; Pipe pipe2 = null;
 
                 if (c1 == null)
@@ -275,7 +276,7 @@ namespace Revit_PCF_Importer
             {
                 //Determine if the tee is reducing. Move this to PARSER?
                 if (!elementSymbol.Branch1Point.Diameter.Equals(elementSymbol.EndPoint1.Diameter)) elementSymbol.IsReducing = true;
-                
+
                 #region ByPlacingFamilyInstance
                 //Filter filter;
                 //if (!elementSymbol.IsReducing) filter = new Filter("EN 10253-2 - Tee: Tee Type B", BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
@@ -291,7 +292,7 @@ namespace Revit_PCF_Importer
                 //Element element = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, teeSymbol, StructuralType.NonStructural);
 
                 //FamilyInstance tee = (FamilyInstance)element;
-                
+
                 //double mainDiameter = elementSymbol.EndPoint1.Diameter;
                 //double branchDiameter = elementSymbol.Branch1Point.Diameter;
 
@@ -366,24 +367,24 @@ namespace Revit_PCF_Importer
 
                 firstMatch = (
                     from elem in allElementsWithConnectors
-                    //Get all elements with connectors in PCFImport.document in a collector
+                        //Get all elements with connectors in PCFImport.document in a collector
                     select ch.GetConnectorSet(elem)
                     //Retrieve the connector set of each element in collector
                     into connectorSet //Pass it on
                     from Connector c in connectorSet //Declare that we are looking at the connectors
                     where Util.IsEqual(elementSymbol.EndPoint1.Xyz, c.Origin)
-                        //Compare the location from the symbol to each connector in the PCFImport.document
+                    //Compare the location from the symbol to each connector in the PCFImport.document
                     select c.Origin).FirstOrDefault(); //Break on first match
 
                 secondMatch = (
                     from elem in allElementsWithConnectors
-                    //Get all elements with connectors in PCFImport.document in a collector
+                        //Get all elements with connectors in PCFImport.document in a collector
                     select ch.GetConnectorSet(elem)
                     //Retrieve the connector set of each element in collector
                     into connectorSet //Pass it on
                     from Connector c in connectorSet //Declare that we are looking at the connectors
                     where Util.IsEqual(elementSymbol.EndPoint2.Xyz, c.Origin)
-                        //Compare the location from the symbol to each connector in the PCFImport.document
+                    //Compare the location from the symbol to each connector in the PCFImport.document
                     select c.Origin).FirstOrDefault(); //Break on first match
                 //If no matching location is found -- fail the operation
                 if (firstMatch == null && secondMatch == null)
@@ -413,7 +414,7 @@ namespace Revit_PCF_Importer
                     otherEnd = elementSymbol.EndPoint1;
                 }
 
-                
+
                 //Place the instance
                 Element cap = PCFImport.doc.Create.NewFamilyInstance(placementLocation, elementSymbol.FamilySymbol,
                     StructuralType.NonStructural);
@@ -450,7 +451,7 @@ namespace Revit_PCF_Importer
                     c2 = ch.MatchConnector(placementLocation, pipe1);
                     elementSymbol.DummyToDelete = pipe1;
                 }
-                
+
                 #region Geometric manipulation
                 //http://thebuildingcoder.typepad.com/blog/2012/05/create-a-pipe-cap.html
                 Connector capConnector = c1;
@@ -458,8 +459,8 @@ namespace Revit_PCF_Importer
                 //Select the OTHER connector
                 MEPCurve hostPipe = start.Owner as MEPCurve;
                 Connector end = (from Connector c in hostPipe.ConnectorManager.Connectors
-                    where (int) c.ConnectorType == 1 && c.Id != start.Id
-                    select c).FirstOrDefault();
+                                 where (int)c.ConnectorType == 1 && c.Id != start.Id
+                                 select c).FirstOrDefault();
                 XYZ dir = (start.Origin - end.Origin).Normalize();
                 XYZ pipeHorizontalDirection = new XYZ(dir.X, dir.Y, 0.0).Normalize(); //Only for horizontal pipes! Fix this if the pipes are in any other direction
                 XYZ connectorDirection = -capConnector.CoordinateSystem.BasisZ;
@@ -497,7 +498,7 @@ namespace Revit_PCF_Importer
                 elementSymbol.CreatedElement = cap;
 
                 c1.ConnectTo(c2);
-                
+
                 return Result.Succeeded;
 
             }
@@ -547,8 +548,8 @@ namespace Revit_PCF_Importer
                 //Select the OTHER connector
                 MEPCurve hostPipe = start.Owner as MEPCurve;
                 Connector end = (from Connector c in hostPipe.ConnectorManager.Connectors
-                    where (int)c.ConnectorType == 1 && c.Id != start.Id
-                    select c).FirstOrDefault();
+                                 where (int)c.ConnectorType == 1 && c.Id != start.Id
+                                 select c).FirstOrDefault();
                 XYZ dir = (start.Origin - end.Origin).Normalize();
                 XYZ pipeHorizontalDirection = new XYZ(dir.X, dir.Y, 0.0).Normalize(); //Only for horizontal pipes! Fix this if the pipes are in any other direction
                 XYZ connectorDirection = -flangeConnector.CoordinateSystem.BasisZ;
@@ -658,12 +659,12 @@ namespace Revit_PCF_Importer
                 //var owner = c1.Owner;
 
                 //Find the target pipe
-                var filter = new ElementClassFilter(typeof (Pipe));
+                var filter = new ElementClassFilter(typeof(Pipe));
                 var view3D = ch.Get3DView(pif._doc);
                 var refIntersect = new ReferenceIntersector(filter, FindReferenceTarget.Element, view3D);
                 ReferenceWithContext rwc = refIntersect.FindNearest(c1.Origin, c1.CoordinateSystem.BasisZ);
                 var refId = rwc.GetReference().ElementId;
-                var pipeToConnectInto = (MEPCurve) pif._doc.GetElement(refId);
+                var pipeToConnectInto = (MEPCurve)pif._doc.GetElement(refId);
 
                 if (c1 != null)
                 {
@@ -681,6 +682,24 @@ namespace Revit_PCF_Importer
             }
             //If this point is reached, something has failed
             return Result.Failed;
+        }
+
+        public Result VALVE(ElementSymbol elementSymbol)
+        {
+
+            try
+            {
+                elementSymbol.CreatedElement = Helper.PlaceAdaptiveFamilyInstance("GenValve: Std", elementSymbol.EndPoint1.Xyz,
+                    elementSymbol.EndPoint2.Xyz);
+                Parameter sizeParameter = elementSymbol.CreatedElement.LookupParameter("Nominal Diameter");
+                sizeParameter.Set(elementSymbol.EndPoint1.Diameter);
+                return Result.Succeeded;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw new Exception("Valve creation generated following error: " + e.Message);
+            }
         }
     }
 }

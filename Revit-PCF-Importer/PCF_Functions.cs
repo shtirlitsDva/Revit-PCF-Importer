@@ -928,18 +928,21 @@ namespace PCF_Functions
         /// <param name="p1"></param>
         /// <param name="p2"></param>
         /// <returns></returns>
-        public static FamilyInstance PlaceAdaptiveMarkerLine(string typeName, XYZ p1, XYZ p2)
+        public static FamilyInstance PlaceAdaptiveFamilyInstance(string famAndTypeName, XYZ p1, XYZ p2)
         {
             //Get the symbol
-            ElementParameterFilter filter = Filter.ParameterValueFilter("Marker Line: " + typeName,
+            ElementParameterFilter filter = Filter.ParameterValueFilter(famAndTypeName,
                 BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM); //Hardcoded until implements
+
             FamilySymbol markerSymbol =
                 new FilteredElementCollector(PCFImport.doc).WherePasses(filter)
                     .Cast<FamilySymbol>()
                     .FirstOrDefault();
+
             // Create a new instance of an adaptive component family
             FamilyInstance instance = AdaptiveComponentInstanceUtils.CreateAdaptiveComponentInstance(PCFImport.doc,
                 markerSymbol);
+
             // Get the placement points of this instance
             IList<ElementId> placePointIds = new List<ElementId>();
             placePointIds = AdaptiveComponentInstanceUtils.GetInstancePlacementPointElementRefIds(instance);
