@@ -347,6 +347,8 @@ namespace Revit_PCF_Importer
                                  select dt).FirstOrDefault();
                 }
 
+                var who = es.ElementType;
+
                 //query the element family and type is using the variables in the loop to query the dataset
                 EnumerableRowCollection<string> query = from value in dataTable.AsEnumerable()
                     where value.Field<string>(0) == es.PipelineReference
