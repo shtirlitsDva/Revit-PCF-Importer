@@ -111,28 +111,41 @@ namespace Revit_PCF_Importer
                                 string.Equals(es.ElementType, "PIPE") ||
                                 string.Equals(es.ElementType, "CAP") ||
                                 string.Equals(es.ElementType, "FLANGE-BLIND") ||
-                                string.Equals(es.ElementType, "OLET")
+                                string.Equals(es.ElementType, "OLET") ||
+                                string.Equals(es.ElementType, "VALVE")
                                 )
                         select es;
                     //Send elements to creation
                     foreach (ElementSymbol es in firstWaveElementsQuery) PcfCreator.SendElementsToCreation(es);
                     trans1.Commit();
                 }
+
                 using (Transaction trans2 = new Transaction(doc))
                 {
-                    trans2.Start("Create caps");
+                    trans2.Start("Create second wave of elements");
                     //Filter CAPs 
-                    var lastWaveElementsQuery = from ElementSymbol es in ExtractedElementCollection.Elements
+                    var secondWaveElementsQuery = from ElementSymbol es in ExtractedElementCollection.Elements
                         where 
                         string.Equals(es.ElementType, "CAP") ||
                         string.Equals(es.ElementType, "FLANGE-BLIND") ||
                         string.Equals(es.ElementType, "OLET")
                         select es;
                     //Send CAPs to creation
-                    foreach (ElementSymbol es in lastWaveElementsQuery) PcfCreator.SendElementsToCreation(es);
+                    foreach (ElementSymbol es in secondWaveElementsQuery) PcfCreator.SendElementsToCreation(es);
                     trans2.Commit();
                 }
 
+                using (Transaction trans3 = new Transaction(doc))
+                {
+                    trans3.Start("Create third wave of elements");
+                    //Filter CAPs 
+                    var thirdWaveElementsQuery = from ElementSymbol es in ExtractedElementCollection.Elements
+                                                  where string.Equals(es.ElementType, "VALVE")
+                                                  select es;
+                    //Send CAPs to creation
+                    foreach (ElementSymbol es in thirdWaveElementsQuery) PcfCreator.SendElementsToCreation(es);
+                    trans3.Commit();
+                }
 
                 using (Transaction tx = new Transaction(doc))
                 {

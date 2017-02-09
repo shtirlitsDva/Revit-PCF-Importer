@@ -15,6 +15,7 @@ using BuildingCoder;
 using PCF_Functions;
 using iv = PCF_Functions.InputVars;
 using ch = PCF_Functions.CreatorHelper;
+using ex = BuildingCoder.Extensions;
 using pif = Revit_PCF_Importer.PCF_Importer_form;
 
 namespace Revit_PCF_Importer
@@ -130,10 +131,10 @@ namespace Revit_PCF_Importer
                 //PCFImport.doc.Regenerate();
                 //FilteredElementCollector collectorDs = new FilteredElementCollector(PCFImport.doc);
                 //collectorDs.OfClass(typeof (DirectShape));
-                //var query = from Element e in collectorDs
+                //var query = from RotateElementInPosition e in collectorDs
                 //    where string.Equals(e.Name, "Elbow " + elementSymbol.Position)
                 //    select e;
-                //Element elem = query.FirstOrDefault();
+                //RotateElementInPosition elem = query.FirstOrDefault();
                 //var geometryElement = elem.get_Geometry(options);
                 //;
                 //Face face = null;
@@ -158,7 +159,7 @@ namespace Revit_PCF_Importer
                 ////Finally place the elbow
                 ////Direction -- third parameter to the create method
                 //XYZ vC = elementSymbol.EndPoint1.Xyz - elementSymbol.CentrePoint.Xyz;
-                //Element element = PCFImport.doc.Create.NewFamilyInstance(faceRef, elementSymbol.CentrePoint.Xyz, vC,
+                //RotateElementInPosition element = PCFImport.doc.Create.NewFamilyInstance(faceRef, elementSymbol.CentrePoint.Xyz, vC,
                 //    (FamilySymbol) elbowSymbol);
 
                 #endregion
@@ -204,7 +205,7 @@ namespace Revit_PCF_Importer
 
                 #region Create by Directly Placing families
 
-                //Element element = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, (FamilySymbol)elbowSymbol, StructuralType.NonStructural);
+                //RotateElementInPosition element = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, (FamilySymbol)elbowSymbol, StructuralType.NonStructural);
 
                 //FamilyInstance elbow = (FamilyInstance)element;
 
@@ -235,7 +236,7 @@ namespace Revit_PCF_Importer
                 //XYZ A = vC.CrossProduct(vA);
                 //XYZ B = vD.CrossProduct(vB);
 
-                //Element marker = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz.Add(A), markerSymbol, StructuralType.NonStructural);
+                //RotateElementInPosition marker = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz.Add(A), markerSymbol, StructuralType.NonStructural);
                 ////Helper.PlaceAdaptiveMarkerLine("Red", elementSymbol.CentrePoint.Xyz, elementSymbol.CentrePoint.Xyz.Add(A));
                 ////Helper.PlaceAdaptiveMarkerLine("Green", elementSymbol.CentrePoint.Xyz, elementSymbol.CentrePoint.Xyz.Add(B));
 
@@ -289,7 +290,7 @@ namespace Revit_PCF_Importer
                 //    return Result.Failed;
                 //}
 
-                //Element element = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, teeSymbol, StructuralType.NonStructural);
+                //RotateElementInPosition element = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, teeSymbol, StructuralType.NonStructural);
 
                 //FamilyInstance tee = (FamilyInstance)element;
 
@@ -540,27 +541,7 @@ namespace Revit_PCF_Importer
                     elementSymbol.DummyToDelete = pipe1;
                 }
 
-                #region Geometric manipulation
-                //http://thebuildingcoder.typepad.com/blog/2012/05/create-a-pipe-cap.html
-                Connector flangeConnector = c1;
-                Connector start = c2;
-                XYZ placementPoint = elementSymbol.CentrePoint.Xyz;
-                //Select the OTHER connector
-                MEPCurve hostPipe = start.Owner as MEPCurve;
-                Connector end = (from Connector c in hostPipe.ConnectorManager.Connectors
-                                 where (int)c.ConnectorType == 1 && c.Id != start.Id
-                                 select c).FirstOrDefault();
-                XYZ dir = (start.Origin - end.Origin).Normalize();
-                XYZ pipeHorizontalDirection = new XYZ(dir.X, dir.Y, 0.0).Normalize(); //Only for horizontal pipes! Fix this if the pipes are in any other direction
-                XYZ connectorDirection = -flangeConnector.CoordinateSystem.BasisZ;
-                double zRotationAngle = pipeHorizontalDirection.AngleTo(connectorDirection);
-                Transform trf = Transform.CreateRotationAtPoint(XYZ.BasisZ, zRotationAngle, start.Origin);
-                XYZ testRotation = trf.OfVector(connectorDirection).Normalize();
-                if (Math.Abs(testRotation.DotProduct(pipeHorizontalDirection) - 1) > 0.00001)
-                    zRotationAngle = -zRotationAngle;
-                Line axis = Line.CreateBound(placementPoint, placementPoint + XYZ.BasisZ); //CREATE BOUND FOR ROTATION FFS!!!! It cost me two days of frustration
-                flange.Location.Rotate(axis, zRotationAngle);
-                #endregion
+                ch.RotateElementInPosition(elementSymbol, c1, c2, flange);
 
                 Parameter sizeParameter = flange.LookupParameter("Nominal Diameter 1"); //Hardcoded until inmplement
                 sizeParameter.Set(pipe1.Diameter);
@@ -689,16 +670,60 @@ namespace Revit_PCF_Importer
 
             try
             {
-                elementSymbol.CreatedElement = Helper.PlaceAdaptiveFamilyInstance("GenValve: Std", elementSymbol.EndPoint1.Xyz,
-                    elementSymbol.EndPoint2.Xyz);
-                Parameter sizeParameter = elementSymbol.CreatedElement.LookupParameter("Nominal Diameter");
-                sizeParameter.Set(elementSymbol.EndPoint1.Diameter);
+                #region Valve as AdaptiveElement
+
+                //elementSymbol.CreatedElement = Helper.PlaceAdaptiveFamilyInstance("GenValve: Std", elementSymbol.EndPoint1.Xyz,
+                //    elementSymbol.EndPoint2.Xyz);
+                //Parameter sizeParameter = elementSymbol.CreatedElement.LookupParameter("Nominal Diameter");
+                //sizeParameter.Set(elementSymbol.EndPoint1.Diameter);
+                //return Result.Succeeded;
+
+                #endregion
+
+                //Place the instance at calculated midpoint
+                Element valve = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, elementSymbol.FamilySymbol, StructuralType.NonStructural);
+
+                //Get all pipe connectors
+                HashSet<Connector> allConnectors = ch.GetALLConnectors(valve.Document);
+
+                //Get the actual endpoints of the valve
+                XYZ p1 = elementSymbol.EndPoint1.Xyz; XYZ p2 = elementSymbol.EndPoint2.Xyz;
+
+                //Get the primary connector of valve
+                Connector c1 = ch.GetPrimaryConnector(ch.GetConnectorSet(valve));
+
+                //Determine the corresponding connectors from all, if not found -- abort
+                Connector c2 = (from Connector c in allConnectors where Util.IsEqual(p1, c.Origin) select c).FirstOrDefault() ??
+                               (from Connector c in allConnectors where Util.IsEqual(p2, c.Origin) select c).FirstOrDefault();
+
+                Pipe pipe1 = null;
+                if (c2 != null) pipe1 = c2.Owner as Pipe;
+
+                if (c2 == null)
+                {
+                    pipe1 = ch.CreateDummyPipe(p1, p2, elementSymbol.EndPoint1, elementSymbol);
+                    c2 = ch.MatchConnector(p1, pipe1);
+                    elementSymbol.DummyToDelete = pipe1;
+                }
+
+                ch.RotateElementInPosition(elementSymbol, c1, c2, valve);
+
+                Parameter sizeParameter = valve.LookupParameter("Nominal Diameter"); //Hardcoded until inmplement
+                sizeParameter.Set(pipe1.Diameter);
+
+                Parameter lengthParameter = valve.LookupParameter("Length"); //Hardcoded until inmplement
+                lengthParameter.Set(Util.Distance(p1, p2));
+                
+                elementSymbol.CreatedElement = valve;
+
                 return Result.Succeeded;
+
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                throw new Exception("Valve creation generated following error: " + e.Message);
+                return Result.Failed;
+                //throw new Exception("Valve creation generated following error: " + e.Message);
             }
         }
     }

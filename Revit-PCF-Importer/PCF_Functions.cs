@@ -131,15 +131,15 @@ namespace PCF_Functions
             //Instantiate collector
             FilteredElementCollector collector = new FilteredElementCollector(doc);
             //Get the elements
-            collector.OfClass(typeof (PipingSystemType));
+            collector.OfClass(typeof(PipingSystemType));
             //Select correct systemType
             PipingSystemType sQuery = (from PipingSystemType st in collector
-                where string.Equals(st.Abbreviation, key)
-                select st).FirstOrDefault();
+                                       where string.Equals(st.Abbreviation, key)
+                                       select st).FirstOrDefault();
 
             var query = from p in new plst().ListParametersAll
-                where string.Equals(p.Domain, "PIPL") && string.Equals(p.ExportingTo, "CII")
-                select p;
+                        where string.Equals(p.Domain, "PIPL") && string.Equals(p.ExportingTo, "CII")
+                        select p;
 
             foreach (pdef p in query.ToList())
             {
@@ -166,13 +166,13 @@ namespace PCF_Functions
             sbElemParameters = new StringBuilder();
             element = passedElement;
             var pQuery = from p in new plst().ListParametersAll
-                where !string.IsNullOrEmpty(p.Keyword) && string.Equals(p.Domain, "ELEM")
-                select p;
+                         where !string.IsNullOrEmpty(p.Keyword) && string.Equals(p.Domain, "ELEM")
+                         select p;
 
             foreach (pdef p in pQuery)
             {
                 //Check for parameter's storage type (can be Int for select few parameters)
-                int sT = (int) element.get_Parameter(p.Guid).StorageType;
+                int sT = (int)element.get_Parameter(p.Guid).StorageType;
 
                 if (sT == 1)
                 {
@@ -201,7 +201,7 @@ namespace PCF_Functions
         public static ElementParameterFilter ParameterValueFilter(string valueQualifier, BuiltInParameter parameterName)
         {
             BuiltInParameter testParam = parameterName;
-            ParameterValueProvider pvp = new ParameterValueProvider(new ElementId((int) testParam));
+            ParameterValueProvider pvp = new ParameterValueProvider(new ElementId((int)testParam));
             FilterStringRuleEvaluator str = new FilterStringContains();
             FilterStringRule paramFr = new FilterStringRule(pvp, str, valueQualifier, false);
             ElementParameterFilter epf = new ElementParameterFilter(paramFr);
@@ -257,20 +257,20 @@ namespace PCF_Functions
             double testedDiameter = 0;
             switch (element.Category.Id.IntegerValue)
             {
-                case (int) BuiltInCategory.OST_PipeCurves:
+                case (int)BuiltInCategory.OST_PipeCurves:
                     if (iv.UNITS_BORE_MM)
-                        testedDiameter = double.Parse(Conversion.PipeSizeToMm(((MEPCurve) element).Diameter/2));
+                        testedDiameter = double.Parse(Conversion.PipeSizeToMm(((MEPCurve)element).Diameter / 2));
                     else if (iv.UNITS_BORE_INCH)
-                        testedDiameter = double.Parse(Conversion.PipeSizeToInch(((MEPCurve) element).Diameter/2));
+                        testedDiameter = double.Parse(Conversion.PipeSizeToInch(((MEPCurve)element).Diameter / 2));
 
                     if (testedDiameter <= diameterLimit) diameterLimitBool = false;
 
                     break;
 
-                case (int) BuiltInCategory.OST_PipeFitting:
-                case (int) BuiltInCategory.OST_PipeAccessory:
+                case (int)BuiltInCategory.OST_PipeFitting:
+                case (int)BuiltInCategory.OST_PipeAccessory:
                     //Cast the element passed to method to FamilyInstance
-                    FamilyInstance familyInstance = (FamilyInstance) element;
+                    FamilyInstance familyInstance = (FamilyInstance)element;
                     //MEPModel of the elements is accessed
                     MEPModel mepmodel = familyInstance.MEPModel;
                     //Get connector set for the element
@@ -283,8 +283,8 @@ namespace PCF_Functions
                         foreach (Connector connector in connectorSet) testedConnector = connector;
                     else
                         testedConnector = (from Connector connector in connectorSet
-                            where connector.GetMEPConnectorInfo().IsPrimary
-                            select connector).FirstOrDefault();
+                                           where connector.GetMEPConnectorInfo().IsPrimary
+                                           select connector).FirstOrDefault();
 
                     if (iv.UNITS_BORE_MM)
                         testedDiameter = double.Parse(Conversion.PipeSizeToMm(testedConnector.Radius));
@@ -302,7 +302,7 @@ namespace PCF_Functions
     public class Conversion
     {
         const double _inch_to_mm = 25.4;
-        const double _foot_to_mm = 12*_inch_to_mm;
+        const double _foot_to_mm = 12 * _inch_to_mm;
         const double _foot_to_inch = 12;
 
         /// <summary>
@@ -311,7 +311,7 @@ namespace PCF_Functions
         public static string RealString(double a)
         {
             //return a.ToString("0.##");
-            return (Math.Truncate(a*100)/100).ToString("0.00", CultureInfo.GetCultureInfo("en-GB"));
+            return (Math.Truncate(a * 100) / 100).ToString("0.00", CultureInfo.GetCultureInfo("en-GB"));
         }
 
         /// <summary>
@@ -320,27 +320,27 @@ namespace PCF_Functions
         public static string PointStringMm(XYZ p)
         {
             return string.Format("{0:0.00} {1:0.00} {2:0.00}",
-                RealString(p.X*_foot_to_mm),
-                RealString(p.Y*_foot_to_mm),
-                RealString(p.Z*_foot_to_mm));
+                RealString(p.X * _foot_to_mm),
+                RealString(p.Y * _foot_to_mm),
+                RealString(p.Z * _foot_to_mm));
         }
 
         public static string PointStringInch(XYZ p)
         {
             return string.Format("{0:0.00} {1:0.00} {2:0.00}",
-                RealString(p.X*_foot_to_inch),
-                RealString(p.Y*_foot_to_inch),
-                RealString(p.Z*_foot_to_inch));
+                RealString(p.X * _foot_to_inch),
+                RealString(p.Y * _foot_to_inch),
+                RealString(p.Z * _foot_to_inch));
         }
 
         public static string PipeSizeToMm(double l)
         {
-            return string.Format("{0}", Math.Round(l*2*_foot_to_mm));
+            return string.Format("{0}", Math.Round(l * 2 * _foot_to_mm));
         }
 
         public static string PipeSizeToInch(double l)
         {
-            return string.Format("{0}", RealString(l*2*_foot_to_inch));
+            return string.Format("{0}", RealString(l * 2 * _foot_to_inch));
         }
 
         public static string AngleToPCF(double l)
@@ -350,7 +350,7 @@ namespace PCF_Functions
 
         public static double RadianToDegree(double angle)
         {
-            return angle*(180.0/Math.PI);
+            return angle * (180.0 / Math.PI);
         }
 
         public static double DegreeToRadian(double angle)
@@ -370,7 +370,7 @@ namespace PCF_Functions
                 _uiDoc = uiDoc;
                 Document doc = _uiDoc.Document;
                 FilteredElementCollector sharedParameters = new FilteredElementCollector(doc);
-                sharedParameters.OfClass(typeof (SharedParameterElement));
+                sharedParameters.OfClass(typeof(SharedParameterElement));
 
                 #region Debug
 
@@ -422,18 +422,18 @@ namespace PCF_Functions
                 string curUsage = "U";
                 string curDomain = "ELEM";
                 var query = from p in new plst().ListParametersAll
-                    where p.Usage == curUsage && p.Domain == curDomain
-                    select p;
+                            where p.Usage == curUsage && p.Domain == curDomain
+                            select p;
 
                 foreach (pdef pDef in query.ToList())
                 {
                     SharedParameterElement parameter = (from SharedParameterElement param in sharedParameters
-                        where param.GuidValue.CompareTo(pDef.Guid) == 0
-                        select param).First();
+                                                        where param.GuidValue.CompareTo(pDef.Guid) == 0
+                                                        select param).First();
                     SchedulableField queryField =
                         (from fld in schFields
-                            where fld.ParameterId.IntegerValue == parameter.Id.IntegerValue
-                            select fld).First();
+                         where fld.ParameterId.IntegerValue == parameter.Id.IntegerValue
+                         select fld).First();
 
                     ScheduleField field = schedAll.Definition.AddField(queryField);
                     if (pDef.Name != "PCF_ELEM_TYPE") continue;
@@ -463,12 +463,12 @@ namespace PCF_Functions
                 foreach (pdef pDef in query.ToList())
                 {
                     SharedParameterElement parameter = (from SharedParameterElement param in sharedParameters
-                        where param.GuidValue.CompareTo(pDef.Guid) == 0
-                        select param).First();
+                                                        where param.GuidValue.CompareTo(pDef.Guid) == 0
+                                                        select param).First();
                     SchedulableField queryField =
                         (from fld in schFields
-                            where fld.ParameterId.IntegerValue == parameter.Id.IntegerValue
-                            select fld).First();
+                         where fld.ParameterId.IntegerValue == parameter.Id.IntegerValue
+                         select fld).First();
 
                     ScheduleField field = schedFilter.Definition.AddField(queryField);
                     if (pDef.Name != "PCF_ELEM_TYPE") continue;
@@ -501,12 +501,12 @@ namespace PCF_Functions
                 foreach (pdef pDef in query.ToList())
                 {
                     SharedParameterElement parameter = (from SharedParameterElement param in sharedParameters
-                        where param.GuidValue.CompareTo(pDef.Guid) == 0
-                        select param).First();
+                                                        where param.GuidValue.CompareTo(pDef.Guid) == 0
+                                                        select param).First();
                     SchedulableField queryField =
                         (from fld in schFields
-                            where fld.ParameterId.IntegerValue == parameter.Id.IntegerValue
-                            select fld).First();
+                         where fld.ParameterId.IntegerValue == parameter.Id.IntegerValue
+                         select fld).First();
                     schedPipeline.Definition.AddField(queryField);
                 }
 
@@ -543,7 +543,7 @@ namespace PCF_Functions
                 //Logic test for Type or Property
                 if (!line.StartsWith("    "))
                 {
-                    //Make a new Element
+                    //Make a new RotateElementInPosition
                     ElementSymbol CurElementSymbol = new ElementSymbol();
                     //Get the keyword from the parsed line
                     CurElementSymbol.ElementType = GetElementKeyword(line);
@@ -568,7 +568,7 @@ namespace PCF_Functions
 
                     ElementParameterFilter filter = Filter.ParameterValueFilter(curPipelineReference, BuiltInParameter.RBS_SYSTEM_ABBREVIATION_PARAM);
                     //Get the elements
-                    PipingSystemType sQuery = collector.OfClass(typeof (PipingSystemType)).WherePasses(filter).Cast<PipingSystemType>().FirstOrDefault();
+                    PipingSystemType sQuery = collector.OfClass(typeof(PipingSystemType)).WherePasses(filter).Cast<PipingSystemType>().FirstOrDefault();
 
                     if (sQuery != null) CurElementSymbol.PipingSystemType = sQuery;
 
@@ -810,7 +810,7 @@ namespace PCF_Functions
 
             else
             {
-                Debug.Assert(e.GetType().IsSubclassOf(typeof(MEPCurve)), 
+                Debug.Assert(e.GetType().IsSubclassOf(typeof(MEPCurve)),
                   "expected all candidate connector provider "
                   + "elements to be either family instances or "
                   + "derived from MEPCurve");
@@ -825,8 +825,8 @@ namespace PCF_Functions
             //Get a list of all pipes created in project
             //Consider adding a filter to only work on pipes in the same pipeline
             HashSet<MEPCurve> query = (from ElementSymbol es in PCFImport.ExtractedElementCollection.Elements
-                                    where string.Equals("PIPE", es.ElementType) && es.CreatedElement != null //Make sure no null elements are passed around, sigh....
-                                    select (MEPCurve)es.CreatedElement).ToHashSet();
+                                       where String.Equals("PIPE", es.ElementType) && es.CreatedElement != null //Make sure no null elements are passed around, sigh....
+                                       select (MEPCurve)es.CreatedElement).ToHashSet();
 
             //Collect all pipe connectors present im project while filtering for end connector types
             HashSet<Connector> allPipeConnectors = query
@@ -837,9 +837,9 @@ namespace PCF_Functions
             return allPipeConnectors;
         }
 
-        public static IList<Connector> GetALLConnectors(Document doc)
+        public static HashSet<Connector> GetALLConnectors(Document doc)
         {
-            return (from e in GetElementsWithConnectors(doc) from Connector c in GetConnectorSet(e) select c).ToList();
+            return (from e in GetElementsWithConnectors(doc) from Connector c in GetConnectorSet(e) select c).ToHashSet();
         }
 
         public static Pipe CreateDummyPipe(XYZ pointToConnect, XYZ directionPoint, PointInSpace endInstance, ElementSymbol elementSymbol)
@@ -852,7 +852,7 @@ namespace PCF_Functions
             FilteredElementCollector levelCollector = new FilteredElementCollector(PCFImport.doc);
             ElementClassFilter levelFilter = new ElementClassFilter(typeof(Level));
             ElementId levelId = levelCollector.WherePasses(levelFilter).FirstElementId();
-            
+
             //Create vector to define pipe
             XYZ pipeDir = pointToConnect - directionPoint;
             XYZ helperPoint1 = pointToConnect.Add(pipeDir.Multiply(2));
@@ -870,8 +870,8 @@ namespace PCF_Functions
         {
             Connector connector = null;
             connector = (from Connector c in pipe.ConnectorManager.Connectors
-                  where Util.IsEqual(pointToMatch, c.Origin)
-                  select c).FirstOrDefault();
+                         where Util.IsEqual(pointToMatch, c.Origin)
+                         select c).FirstOrDefault();
 
             return connector;
         }
@@ -888,12 +888,16 @@ namespace PCF_Functions
 
         public static Connector GetSecondaryConnector(ConnectorSet conSet)
         {
-            Connector connector = null;
-            connector = (from Connector c in conSet
-                         where c.GetMEPConnectorInfo().IsSecondary.Equals(true)
-                         select c).FirstOrDefault();
+            return (from Connector c in conSet
+                    where c.GetMEPConnectorInfo().IsSecondary.Equals(true)
+                    select c).FirstOrDefault();
+        }
 
-            return connector;
+        public static Connector GetPrimaryConnector(ConnectorSet conSet)
+        {
+            return (from Connector c in conSet
+                    where c.GetMEPConnectorInfo().IsPrimary.Equals(true)
+                    select c).FirstOrDefault();
         }
 
         /// <summary>
@@ -917,6 +921,99 @@ namespace PCF_Functions
             }
             return null;
         }
+
+        public static void RotateElementInPosition(ElementSymbol elementSymbol, Connector conOnFamilyToConnect, Connector start, Element element)
+        {
+            #region Geometric manipulation
+
+            //http://thebuildingcoder.typepad.com/blog/2012/05/create-a-pipe-cap.html
+
+            //Centre of element
+            XYZ placementPoint = elementSymbol.CentrePoint.Xyz;
+
+            //Select the OTHER connector
+            MEPCurve hostPipe = start.Owner as MEPCurve;
+
+            Connector end = (from Connector c in hostPipe.ConnectorManager.Connectors //End of the host/dummy pipe
+                             where c.Id != start.Id && (int)c.ConnectorType == 1
+                             select c).FirstOrDefault();
+
+            XYZ dir = (start.Origin - end.Origin);
+
+            // rotate the cap if necessary
+            // rotate about Z first
+
+            XYZ pipeHorizontalDirection = new XYZ(dir.X, dir.Y, 0.0).Normalize();
+            //XYZ pipeHorizontalDirection = new XYZ(dir.X, dir.Y, 0.0);
+
+            XYZ connectorDirection = -conOnFamilyToConnect.CoordinateSystem.BasisZ;
+
+            double zRotationAngle = pipeHorizontalDirection.AngleTo(connectorDirection);
+
+            Transform trf = Transform.CreateRotationAtPoint(XYZ.BasisZ, zRotationAngle, placementPoint);
+
+            XYZ testRotation = trf.OfVector(connectorDirection).Normalize();
+
+            if (Math.Abs(testRotation.DotProduct(pipeHorizontalDirection) - 1) > 0.00001) zRotationAngle = -zRotationAngle;
+
+            Line axis = Line.CreateBound(placementPoint, placementPoint + XYZ.BasisZ);
+
+            ElementTransformUtils.RotateElement(element.Document, element.Id, axis, zRotationAngle);
+
+            //Parameter comments = element.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS);
+            //comments.Set("Horizontal only");
+
+            // Need to rotate vertically?
+
+            if (Math.Abs(dir.DotProduct(XYZ.BasisZ)) > 0.000001)
+            {
+                // if pipe is straight up and down, 
+                // kludge it my way else
+
+                if (dir.X.Round3() == 0 && dir.Y.Round3() == 0 && dir.Z.Round3() != 0)
+                {
+                    XYZ yaxis = new XYZ(0.0, 1.0, 0.0);
+                    //XYZ yaxis = dir.CrossProduct(connectorDirection);
+
+                    double rotationAngle = dir.AngleTo(yaxis);
+                    //double rotationAngle = 90;
+
+                    if (dir.Z.Equals(1)) rotationAngle = -rotationAngle;
+
+                    axis = Line.CreateBound(placementPoint, new XYZ(placementPoint.X, placementPoint.Y+5,placementPoint.Z));
+
+                    ElementTransformUtils.RotateElement(element.Document, element.Id, axis, rotationAngle);
+
+                    //comments.Set("Vertical!");
+                }
+                else
+                {
+                    #region sloped pipes
+
+                    double rotationAngle = dir.AngleTo(pipeHorizontalDirection);
+
+                    XYZ normal = pipeHorizontalDirection.CrossProduct(XYZ.BasisZ);
+
+                    trf = Transform.CreateRotationAtPoint(normal, rotationAngle, placementPoint);
+
+                    testRotation = trf.OfVector(dir).Normalize();
+
+                    if (Math.Abs(testRotation.DotProduct(pipeHorizontalDirection) - 1) < 0.00001)
+                        rotationAngle = -rotationAngle;
+
+                    axis = Line.CreateBound(placementPoint, placementPoint + normal);
+
+                    ElementTransformUtils.RotateElement(element.Document, element.Id, axis, rotationAngle);
+
+                    //comments.Set("Sloped");
+
+                    #endregion
+                }
+            }
+            #endregion
+        }
+
+
     }
 
     public class Helper

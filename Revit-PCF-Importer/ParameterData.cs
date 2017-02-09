@@ -31,7 +31,7 @@ namespace PCF_Functions
         }
 
         public string Name { get; }
-        public string Domain { get; } //PIPL = Pipeline, ELEM = Element, SUPP = Support.
+        public string Domain { get; } //PIPL = Pipeline, ELEM = RotateElementInPosition, SUPP = Support.
         public string Usage { get; } //U = user defined values, P = programatically defined values.
         public ParameterType Type { get; }
         public Guid Guid { get; }
@@ -44,7 +44,7 @@ namespace PCF_Functions
         public readonly IList<pdef> ListParametersAll = new List<pdef>();
 
         #region Parameter Definition
-        //Element parameters user defined
+        //RotateElementInPosition parameters user defined
         public readonly pdef PCF_ELEM_TYPE = new pdef("PCF_ELEM_TYPE", "ELEM", "U", pd.Text, new Guid("bfc7b779-786d-47cd-9194-8574a5059ec8"), "");
         public readonly pdef PCF_ELEM_SKEY = new pdef("PCF_ELEM_SKEY", "ELEM", "U", pd.Text, new Guid("3feebd29-054c-4ce8-bc64-3cff75ed6121"), "SKEY");
         public readonly pdef PCF_ELEM_SPEC = new pdef("PCF_ELEM_SPEC", "ELEM", "U", pd.Text, new Guid("90be8246-25f7-487d-b352-554f810fcaa7"), "PIPING-SPEC");
