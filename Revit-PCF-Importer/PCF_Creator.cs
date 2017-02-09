@@ -680,6 +680,14 @@ namespace Revit_PCF_Importer
 
                 #endregion
 
+                //The strange symbol activation thingie...
+                //See: http://thebuildingcoder.typepad.com/blog/2014/08/activate-your-family-symbol-before-using-it.html
+                if (!elementSymbol.FamilySymbol.IsActive)
+                {
+                    elementSymbol.FamilySymbol.Activate();
+                    PCFImport.doc.Regenerate();
+                }
+
                 //Place the instance at calculated midpoint
                 Element valve = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, elementSymbol.FamilySymbol, StructuralType.NonStructural);
 
@@ -713,7 +721,7 @@ namespace Revit_PCF_Importer
 
                 Parameter lengthParameter = valve.LookupParameter("Length"); //Hardcoded until inmplement
                 lengthParameter.Set(Util.Distance(p1, p2));
-                
+
                 elementSymbol.CreatedElement = valve;
 
                 return Result.Succeeded;
