@@ -973,14 +973,12 @@ namespace PCF_Functions
                 if (dir.X.Round3() == 0 && dir.Y.Round3() == 0 && dir.Z.Round3() != 0)
                 {
                     XYZ yaxis = new XYZ(0.0, 1.0, 0.0);
-                    //XYZ yaxis = dir.CrossProduct(connectorDirection);
 
                     double rotationAngle = dir.AngleTo(yaxis);
-                    //double rotationAngle = 90;
 
-                    if (dir.Z.Equals(1)) rotationAngle = -rotationAngle;
+                    if (dir.Z > 0) rotationAngle = -rotationAngle;
 
-                    axis = Line.CreateBound(placementPoint, new XYZ(placementPoint.X, placementPoint.Y+5,placementPoint.Z));
+                    axis = Line.CreateBound(placementPoint, new XYZ(placementPoint.X, placementPoint.Y + 5, placementPoint.Z));
 
                     ElementTransformUtils.RotateElement(element.Document, element.Id, axis, rotationAngle);
 
