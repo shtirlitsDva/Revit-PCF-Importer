@@ -131,10 +131,10 @@ namespace Revit_PCF_Importer
                 //PCFImport.doc.Regenerate();
                 //FilteredElementCollector collectorDs = new FilteredElementCollector(PCFImport.doc);
                 //collectorDs.OfClass(typeof (DirectShape));
-                //var query = from RotateElementInPosition e in collectorDs
+                //var query = from Element e in collectorDs
                 //    where string.Equals(e.Name, "Elbow " + elementSymbol.Position)
                 //    select e;
-                //RotateElementInPosition elem = query.FirstOrDefault();
+                //Element elem = query.FirstOrDefault();
                 //var geometryElement = elem.get_Geometry(options);
                 //;
                 //Face face = null;
@@ -159,7 +159,7 @@ namespace Revit_PCF_Importer
                 ////Finally place the elbow
                 ////Direction -- third parameter to the create method
                 //XYZ vC = elementSymbol.EndPoint1.Xyz - elementSymbol.CentrePoint.Xyz;
-                //RotateElementInPosition element = PCFImport.doc.Create.NewFamilyInstance(faceRef, elementSymbol.CentrePoint.Xyz, vC,
+                //Element element = PCFImport.doc.Create.NewFamilyInstance(faceRef, elementSymbol.CentrePoint.Xyz, vC,
                 //    (FamilySymbol) elbowSymbol);
 
                 #endregion
@@ -205,7 +205,7 @@ namespace Revit_PCF_Importer
 
                 #region Create by Directly Placing families
 
-                //RotateElementInPosition element = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, (FamilySymbol)elbowSymbol, StructuralType.NonStructural);
+                //Element element = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, (FamilySymbol)elbowSymbol, StructuralType.NonStructural);
 
                 //FamilyInstance elbow = (FamilyInstance)element;
 
@@ -236,7 +236,7 @@ namespace Revit_PCF_Importer
                 //XYZ A = vC.CrossProduct(vA);
                 //XYZ B = vD.CrossProduct(vB);
 
-                //RotateElementInPosition marker = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz.Add(A), markerSymbol, StructuralType.NonStructural);
+                //Element marker = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz.Add(A), markerSymbol, StructuralType.NonStructural);
                 ////Helper.PlaceAdaptiveMarkerLine("Red", elementSymbol.CentrePoint.Xyz, elementSymbol.CentrePoint.Xyz.Add(A));
                 ////Helper.PlaceAdaptiveMarkerLine("Green", elementSymbol.CentrePoint.Xyz, elementSymbol.CentrePoint.Xyz.Add(B));
 
@@ -290,7 +290,7 @@ namespace Revit_PCF_Importer
                 //    return Result.Failed;
                 //}
 
-                //RotateElementInPosition element = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, teeSymbol, StructuralType.NonStructural);
+                //Element element = PCFImport.doc.Create.NewFamilyInstance(elementSymbol.CentrePoint.Xyz, teeSymbol, StructuralType.NonStructural);
 
                 //FamilyInstance tee = (FamilyInstance)element;
 

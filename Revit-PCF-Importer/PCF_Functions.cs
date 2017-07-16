@@ -543,7 +543,7 @@ namespace PCF_Functions
                 //Logic test for Type or Property
                 if (!line.StartsWith("    "))
                 {
-                    //Make a new RotateElementInPosition
+                    //Make a new Element
                     ElementSymbol CurElementSymbol = new ElementSymbol();
                     //Get the keyword from the parsed line
                     CurElementSymbol.ElementType = GetElementKeyword(line);

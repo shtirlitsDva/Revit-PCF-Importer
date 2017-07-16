@@ -818,7 +818,7 @@ namespace BuildingCoder
         }
         #endregion // Display a message
 
-        #region RotateElementInPosition Selection
+        #region Element Selection
         public static Element SelectSingleElement(UIDocument uidoc, string description)
         {
             if (ViewType.Internal == uidoc.ActiveView.ViewType)
@@ -830,14 +830,14 @@ namespace BuildingCoder
 
 #if _2010
     sel.Elements.Clear();
-    RotateElementInPosition e = null;
+    Element e = null;
     sel.StatusbarTip = "Please select " + description;
     if( sel.PickOne() )
     {
       ElementSetIterator elemSetItr
         = sel.Elements.ForwardIterator();
       elemSetItr.MoveNext();
-      e = elemSetItr.Current as RotateElementInPosition;
+      e = elemSetItr.Current as Element;
     }
     return e;
 #endif // _2010
@@ -846,10 +846,10 @@ namespace BuildingCoder
             {
                 Reference r = uidoc.Selection.PickObject(ObjectType.Element, "Please select " + description);
 
-                // 'Autodesk.Revit.DB.Reference.RotateElementInPosition' is
+                // 'Autodesk.Revit.DB.Reference.Element' is
                 // obsolete: Property will be removed. Use
                 // Document.GetElement(Reference) instead.
-                //return null == r ? null : r.RotateElementInPosition; // 2011
+                //return null == r ? null : r.Element; // 2011
 
                 return uidoc.Document.GetElement(r); // 2012
             }
@@ -941,9 +941,9 @@ namespace BuildingCoder
             }
             return 0 < a.Count;
         }
-        #endregion // RotateElementInPosition Selection
+        #endregion // Element Selection
 
-        #region RotateElementInPosition filtering
+        #region Element filtering
         /// <summary>
         /// Return all elements of the requested class i.e. System.Type
         /// matching the given built-in category in the given document.
@@ -978,8 +978,8 @@ namespace BuildingCoder
 
       // explicit iteration and manual checking of a property:
 
-      RotateElementInPosition ret = null;
-      foreach( RotateElementInPosition e in collector )
+      Element ret = null;
+      foreach( Element e in collector )
       {
         if( e.Name.Equals( name ) )
         {
@@ -994,20 +994,20 @@ namespace BuildingCoder
 
       // using LINQ:
 
-      IEnumerable<RotateElementInPosition> elementsByName =
+      IEnumerable<Element> elementsByName =
         from e in collector
         where e.Name.Equals( name )
         select e;
 
-      return elementsByName.First<RotateElementInPosition>();
+      return elementsByName.First<Element>();
 #endif // USE_LINQ
 
             // using an anonymous method:
 
             // if no matching elements exist, First<> throws an exception.
 
-            //return collector.Any<RotateElementInPosition>( e => e.Name.Equals( name ) )
-            //  ? collector.First<RotateElementInPosition>( e => e.Name.Equals( name ) )
+            //return collector.Any<Element>( e => e.Name.Equals( name ) )
+            //  ? collector.First<Element>( e => e.Name.Equals( name ) )
             //  : null;
 
             // using an anonymous method to define a named method:
@@ -1075,7 +1075,7 @@ namespace BuildingCoder
             }
             return null;
         }
-        #endregion // RotateElementInPosition filtering
+        #endregion // Element filtering
 
         #region MEP utilities
         /// <summary>
@@ -1093,7 +1093,7 @@ namespace BuildingCoder
             if (null == mc && null == fi)
             {
                 throw new ArgumentException(
-                  "RotateElementInPosition is neither an MEP curve nor a fitting.");
+                  "Element is neither an MEP curve nor a fitting.");
             }
 
             return null == mc
@@ -1197,7 +1197,7 @@ namespace BuildingCoder
             if (null == cm)
             {
                 throw new ArgumentException(
-                  "RotateElementInPosition a has no connectors.");
+                  "Element a has no connectors.");
             }
 
             Connector ca = GetConnectorClosestTo(
@@ -1208,7 +1208,7 @@ namespace BuildingCoder
             if (null == cm)
             {
                 throw new ArgumentException(
-                  "RotateElementInPosition b has no connectors.");
+                  "Element b has no connectors.");
             }
 
             Connector cb = GetConnectorClosestTo(
@@ -1343,7 +1343,7 @@ namespace BuildingCoder
     public static class JtElementExtensionMethods
     {
         /// <summary>
-        /// Return the curve from a Revit database RotateElementInPosition 
+        /// Return the curve from a Revit database Element 
         /// location curve, if it has one.
         /// </summary>
         public static Curve GetCurve(this Element e)

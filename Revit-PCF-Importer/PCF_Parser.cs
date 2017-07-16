@@ -34,7 +34,7 @@ namespace Revit_PCF_Importer
         Result GENERAL(ElementSymbol elementSymbol);
         Result FLANGE(ElementSymbol elementSymbol);
 
-        //RotateElementInPosition level keywords
+        //Element level keywords
         Result ELEMENT_ATTRIBUTE_NOT_IMPLEMENTED(ElementSymbol elementSymbol, string line);
         Result END_POINT(ElementSymbol elementSymbol, string line);
         Result CENTRE_POINT(ElementSymbol elementSymbol, string line);
@@ -177,7 +177,7 @@ namespace Revit_PCF_Importer
         }
         #endregion
 
-        #region RotateElementInPosition level keywords
+        #region Element level keywords
         public Result ELEMENT_ATTRIBUTE_NOT_IMPLEMENTED(ElementSymbol elementSymbol, string line)
         {
             return Result.Succeeded;
@@ -202,7 +202,7 @@ namespace Revit_PCF_Importer
                 return Result.Succeeded;
             }
             //The rest of line is ignored for now
-            Util.ErrorMsg("RotateElementInPosition at line number " + elementSymbol.Position + " has more than two END-POINTS, which is not allowed!");
+            Util.ErrorMsg("Element at line number " + elementSymbol.Position + " has more than two END-POINTS, which is not allowed!");
             return Result.Failed;
         }
 
