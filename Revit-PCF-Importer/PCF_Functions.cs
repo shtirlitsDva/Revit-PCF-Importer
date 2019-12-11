@@ -571,6 +571,8 @@ namespace PCF_Functions
                     PipingSystemType sQuery = collector.OfClass(typeof(PipingSystemType)).WherePasses(filter).Cast<PipingSystemType>().FirstOrDefault();
 
                     if (sQuery != null) CurElementSymbol.PipingSystemType = sQuery;
+                    else if (curPipelineReference == "PRE-PIPELINE" || curPipelineReference == "MATERIALS"); //<-- Empty clause to ingore PRE-PIPELINE and MATERIALS
+                    else throw new Exception($"No PipingSystemType with abbreviation {curPipelineReference} defined in project!");
 
                     //Add the extracted element to the collection
                     collection.Elements.Add(CurElementSymbol);

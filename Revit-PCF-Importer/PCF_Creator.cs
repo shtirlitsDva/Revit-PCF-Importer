@@ -53,7 +53,8 @@ namespace Revit_PCF_Importer
             try
             {
                 //Choose pipe type.
-                ElementId pipeTypeId = elementSymbol.PipeType.Id;
+                ElementId pipeTypeId = elementSymbol.PipeType?.Id;
+                if (pipeTypeId == null) throw new Exception("pipeTypeId is null for PIPE!");
 
                 //Collect levels and select one level
                 FilteredElementCollector collector = new FilteredElementCollector(PCFImport.doc);
@@ -77,8 +78,7 @@ namespace Revit_PCF_Importer
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                return Result.Failed;
+                throw new Exception("Creation of PIPE threw an exception: " + e.Message );
             }
         }
 

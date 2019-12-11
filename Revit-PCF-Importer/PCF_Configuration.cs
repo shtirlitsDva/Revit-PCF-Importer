@@ -351,10 +351,16 @@ namespace Revit_PCF_Importer
                 EnumerableRowCollection<string> query = from value in dataTable.AsEnumerable()
                     where value.Field<string>(0) == es.PipelineReference
                     select value.Field<string>(es.ElementType);
-                string familyAndType = query.FirstOrDefault().ToString();
+
+                string familyAndType = query.FirstOrDefault()?.ToString();
+                if (string.IsNullOrEmpty(familyAndType)) throw new Exception($"No settings defined for {es.PipelineReference}!\nCheck EXCEL file to have correct PIPELINE-REFERENCE.");
+
                 FilteredElementCollector collector = new FilteredElementCollector(PCF_Importer_form._doc);
+
                 ElementParameterFilter filter = Filter.ParameterValueFilter(familyAndType, BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
+
                 LogicalOrFilter classFilter = Filter.FamSymbolsAndPipeTypes();
+
                 Element familySymbol = collector.WherePasses(classFilter).WherePasses(filter).FirstOrDefault();
 
                 if (es.ElementType == "PIPE") es.PipeType = (PipeType)familySymbol;
@@ -362,15 +368,19 @@ namespace Revit_PCF_Importer
 
                 //query the corresponding pipe family and type to add to the element symbol
                 //This is because pipe type is needed to create certain fittings
-                if (es.ElementType != "PIPE" || es.ElementType != "OLET") //Exclude olets -- they are handled next
+                if (es.ElementType != "PIPE" && es.ElementType != "OLET") //Exclude olets -- they are handled next
                 {
                     EnumerableRowCollection<string> queryPipeType = from value in dataTable.AsEnumerable()
                                                             where value.Field<string>(0) == es.PipelineReference
                                                             select value.Field<string>("PIPE");
+
                     string pipeTypeName = queryPipeType.FirstOrDefault();
+                    if (string.IsNullOrEmpty(pipeTypeName)) throw new Exception($"No settings defined for {es.PipelineReference} for field PIPE!\nCheck EXCEL file to have correct PIPELINE-REFERENCE.");
+
                     FilteredElementCollector collectorPipeType = new FilteredElementCollector(PCF_Importer_form._doc);
                     ElementParameterFilter filterPipeTypeName = Filter.ParameterValueFilter(pipeTypeName, BuiltInParameter.SYMBOL_FAMILY_AND_TYPE_NAMES_PARAM);
                     Element pipeType = collectorPipeType.OfClass(typeof(PipeType)).WherePasses(filterPipeTypeName).FirstOrDefault();
+                    if (pipeType == null) throw new Exception("Collection of correct pipeType failed!");
                     es.PipeType = (PipeType)pipeType;
                 }
                 if (es.ElementType == "OLET") //Get the TAP pipetype for olets
@@ -388,6 +398,7 @@ namespace Revit_PCF_Importer
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                throw new Exception(e.Message);
             }
         }
         #endregion
